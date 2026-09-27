@@ -1,0 +1,23 @@
+{
+  "name": "insane-power-esports-web",
+  "version": "2.0.0",
+  "description": "Full-Stack Free Fire Weekly Wars Platform with Google Auth, 48-Slot Line-Wise System & Day-Wise IDP Security",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2"
+  },
+  "keywords": [
+    "free-fire",
+    "esports",
+    "weekly-wars",
+    "tournament-platform"
+  ],
+  "author": "Insane Power Esports",
+  "license": "ISC"
+}

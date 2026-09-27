@@ -1,0 +1,80 @@
+{
+  "users": [
+    {
+      "id": "u_1",
+      "username": "thunder_igl",
+      "name": "Sameer Sheikh",
+      "email": "thunder@gmail.com",
+      "ign": "IP・THUNDER",
+      "uid": "1948201948",
+      "phone": "+91 98765 43210",
+      "authProvider": "local",
+      "role": "Captain / IGL",
+      "createdAt": "2026-09-27T06:17:26.603Z"
+    },
+    {
+      "id": "u_2",
+      "username": "viper_sniper",
+      "name": "Aditya Nair",
+      "email": "viper@gmail.com",
+      "ign": "IP・VIPER",
+      "uid": "2048192847",
+      "phone": "+91 98765 43211",
+      "authProvider": "local",
+      "role": "Sniper",
+      "createdAt": "2026-09-27T06:17:26.604Z"
+    },
+    {
+      "id": "u_3",
+      "username": "blaze_rusher",
+      "name": "Rohan Varma",
+      "email": "blaze@gmail.com",
+      "ign": "IP・BLAZE",
+      "uid": "1829471928",
+      "phone": "+91 98765 43212",
+      "authProvider": "local",
+      "role": "Entry Rusher",
+      "createdAt": "2026-09-27T06:17:26.604Z"
+    },
+    {
+      "id": "u_4",
+      "username": "shadow_ff",
+      "name": "Dev Singhania",
+      "email": "shadow@gmail.com",
+      "ign": "IP・SHADOW",
+      "uid": "2291847192",
+      "phone": "+91 98765 43213",
+      "authProvider": "local",
+      "role": "Support",
+      "createdAt": "2026-09-27T06:17:26.604Z"
+    },
+    {
+      "id": "u_5",
+      "username": "cyborg_sub",
+      "name": "Kabir Khan",
+      "email": "cyborg@gmail.com",
+      "ign": "IP・CYBORG",
+      "uid": "2819472910",
+      "phone": "+91 98765 43214",
+      "authProvider": "local",
+      "role": "Substitute",
+      "createdAt": "2026-09-27T06:17:26.604Z"
+    }
+  ],
+  "squads": [],
+  "registrations": [],
+  "idpSettings": {
+    "activeDay": 1,
+    "activeGroupName": "Day 1 - Group A (Slots 1 - 12)",
+    "isReleased": true,
+    "roomId": "8492019",
+    "roomPass": "IP777",
+    "matchTime": "6:00 PM IST"
+  },
+  "leaderboard": {
+    "season": "FREE FIRE WEEKLY WARS - SEASON 12 FINALS",
+    "isPublished": false,
+    "mvp": null,
+    "standings": []
+  }
+}

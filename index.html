@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>INSANE POWER ESPORTS | Free Fire Weekly Wars 48-Slot Hub & IDP Portal</title>
+  
+  <!-- SEO & Social Meta -->
+  <meta name="description" content="Official Free Fire Weekly Wars 48-Slot Portal of INSANE POWER ESPORTS. 4-Day group allocation (12 squads per day), day-specific Room ID & Password release, permanent squad builder, and live standings.">
+  <meta name="keywords" content="Insane Power Esports, Free Fire Weekly Wars, 48 Slots Free Fire, Room ID Pass, Free Fire Tournaments India, Slot Pass">
+  <meta name="author" content="Insane Power Esports">
+  
+  <meta property="og:title" content="INSANE POWER ESPORTS - Free Fire Weekly Wars (48 Slots)">
+  <meta property="og:description" content="Register your Free Fire squad for Weekly Wars (48 Slots / 4 Days), access your match day Room ID & Pass, and claim Booyah glory.">
+  <meta property="og:image" content="assets/images/logo.png">
+  <meta property="og:type" content="website">
+
+  <!-- Favicon -->
+  <link rel="icon" href="assets/images/logo.png" type="image/png">
+
+  <!-- Three.js 3D Cyber Graphics Library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+  <!-- Google Identity Services -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            ipGold: '#F59E0B',
+            ipAmber: '#D97706',
+            ipRed: '#EF4444',
+            ipCyan: '#06B6D4',
+            ipDark950: '#05070C',
+            ipDark900: '#0A0D15',
+            ipDark800: '#101623',
+            ipDark700: '#172033',
+            ipDark600: '#202D47'
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Font Awesome CDN -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+
+  <!-- Master Stylesheet with 3D Innovations & Professional Typography -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-[#05070C] text-slate-100 antialiased selection:bg-amber-500 selection:text-black">
+
+  <!-- Three.js Interactive 3D Cyber Arena Backdrop -->
+  <div id="three-canvas-container"></div>
+
+  <!-- TOP ALERT TICKER -->
+  <div class="relative z-50 bg-gradient-to-r from-amber-600 via-yellow-500 to-amber-600 text-black py-1.5 px-4 text-center font-heading font-bold text-xs uppercase tracking-wider overflow-hidden shadow-sm">
+    <div class="flex items-center justify-center gap-3">
+      <span class="bg-black text-amber-400 px-2 py-0.5 rounded text-[10px] font-tech font-bold">48-SLOT ARENA</span>
+      <span>FREE FIRE MAX 48 SLOTS (4 DAYS &bull; 12 SQUADS PER DAY) LIVE &bull; 1K WEEKLY WARS</span>
+      <a href="#register" data-route="register" class="underline hover:text-white font-extrabold ml-2 hidden sm:inline">REGISTER SQUAD &rarr;</a>
+    </div>
+  </div>
+
+  <!-- NAVIGATION HEADER -->
+  <header class="sticky top-0 z-40 bg-[#05070C]/90 backdrop-blur-md border-b border-white/10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-20">
+        
+        <!-- Brand Logo -->
+        <a href="#home" data-route="home" class="flex items-center gap-3 group">
+          <div class="relative">
+            <img src="assets/images/logo.png" alt="Insane Power Esports" class="w-11 h-11 object-contain group-hover:scale-110 transition-transform">
+            <div class="absolute inset-0 bg-amber-400/25 blur-md rounded-full -z-10"></div>
+          </div>
+          <div>
+            <span class="font-display font-black text-xl sm:text-2xl tracking-wide text-white block leading-none">
+              INSANE <span class="text-amber-400">POWER</span>
+            </span>
+            <span class="text-[10px] font-tech font-bold tracking-wider text-amber-400/90 block uppercase">48-SLOT WEEKLY WARS</span>
+          </div>
+        </a>
+
+        <!-- Desktop Nav -->
+        <nav class="hidden md:flex items-center space-x-1 font-heading font-semibold text-sm tracking-wide">
+          <a href="#home" data-route="home" class="nav-link px-3 py-2 text-slate-300 hover:text-amber-400 transition-colors active">Home</a>
+          <a href="#wars" data-route="wars" class="nav-link px-3 py-2 text-slate-300 hover:text-amber-400 transition-colors">4-Day Wars</a>
+          <a href="#register" data-route="register" class="nav-link px-3 py-2 text-amber-400 hover:text-amber-300 transition-colors">
+            <i class="fa-solid fa-crosshairs mr-1"></i> Squad Registration
+          </a>
+          <a href="#idp" data-route="idp" class="nav-link px-3 py-2 text-amber-300 hover:text-white transition-colors bg-amber-500/10 rounded-lg border border-amber-500/30">
+            <i class="fa-solid fa-key mr-1 text-amber-400"></i> Room ID & Pass (IDP)
+          </a>
+          <a href="#leaderboard" data-route="leaderboard" class="nav-link px-3 py-2 text-slate-300 hover:text-amber-400 transition-colors">Points Table</a>
+          <a href="#rules" data-route="rules" class="nav-link px-3 py-2 text-slate-300 hover:text-amber-400 transition-colors">Rules & FAQ</a>
+        </nav>
+
+        <!-- Right Side: Player Auth & Admin -->
+        <div class="hidden sm:flex items-center gap-3">
+          <div id="header-auth-container">
+            <!-- Injected by updateAuthUI() -->
+          </div>
+
+          <a href="#admin" data-route="admin" class="text-xs font-tech text-slate-400 hover:text-amber-400 px-3 py-2 border border-slate-800 rounded-lg bg-slate-900/90 transition-colors" title="Organizer Admin Panel">
+            <i class="fa-solid fa-user-shield mr-1"></i> Admin
+          </a>
+        </div>
+
+        <!-- Mobile Menu Button -->
+        <div class="flex md:hidden items-center gap-2">
+          <button id="mobile-menu-btn" class="p-2.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-amber-400">
+            <i class="fa-solid fa-bars-staggered text-xl"></i>
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Mobile Dropdown -->
+    <div id="mobile-menu" class="hidden md:hidden bg-[#0A0D15] border-b border-amber-500/20 px-4 pt-2 pb-6 space-y-3 font-heading font-semibold">
+      <div id="mobile-auth-container">
+        <!-- Injected by updateAuthUI() -->
+      </div>
+      <a href="#home" data-route="home" class="block px-3 py-2 rounded text-slate-300 hover:bg-slate-800 hover:text-amber-400">Home</a>
+      <a href="#wars" data-route="wars" class="block px-3 py-2 rounded text-slate-300 hover:bg-slate-800 hover:text-amber-400">4-Day Weekly Wars</a>
+      <a href="#register" data-route="register" class="block px-3 py-2 rounded text-amber-400 hover:bg-slate-800">Squad Registration</a>
+      <a href="#idp" data-route="idp" class="block px-3 py-2 rounded text-yellow-300 bg-amber-500/10 border border-amber-500/30">Room ID & Pass (IDP)</a>
+      <a href="#leaderboard" data-route="leaderboard" class="block px-3 py-2 rounded text-slate-300 hover:bg-slate-800 hover:text-amber-400">Points Table</a>
+      <a href="#rules" data-route="rules" class="block px-3 py-2 rounded text-slate-300 hover:bg-slate-800 hover:text-amber-400">Rules & Fair Play</a>
+      <a href="#admin" data-route="admin" class="block px-3 py-2 rounded text-slate-400 hover:bg-slate-800 hover:text-amber-400">Admin / Organizer Portal</a>
+      <div class="pt-2">
+        <button onclick="goToRegistration('ww-ff-12')" class="w-full btn-esports-primary py-3 rounded-lg text-center text-xs font-bold uppercase tracking-wider">
+          Squad Registration Hub
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ==================== MAIN VIEWS ==================== -->
+  <main class="relative z-10 min-h-screen">
+
+    <!-- ==================== VIEW 1: HOME ==================== -->
+    <section id="view-home" class="page-section">
+      
+      <!-- HERO BANNER -->
+      <div class="relative overflow-hidden pt-12 pb-16 md:pt-20 md:pb-28 bg-grid-pattern">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+            
+            <!-- Left Hero Details -->
+            <div class="lg:col-span-7 space-y-6 text-center lg:text-left">
+              
+              <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-tech font-bold uppercase tracking-wider">
+                <span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
+                FREE FIRE MAX 48 SLOTS (4 DAYS &bull; 12 SQUADS PER DAY)
+              </div>
+
+              <h1 class="font-display font-black text-4xl sm:text-5xl md:text-6xl lg:text-7xl tracking-tight text-white leading-tight">
+                INSANE POWER <br>
+                <span class="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-yellow-200 to-amber-500 text-glow-gold">
+                  WEEKLY WARS
+                </span>
+              </h1>
+
+              <p class="text-slate-300 font-body text-base sm:text-lg max-w-2xl mx-auto lg:mx-0 leading-relaxed font-normal">
+                48 Squads divided line-wise across 4 Match Days (12 squads per group). Exclusive Day-Wise Room ID & Password access for today's 12 Captains only with ₹1,000 Weekly Prize Pool!
+              </p>
+
+              <!-- Main CTAs -->
+              <div class="flex flex-wrap items-center justify-center lg:justify-start gap-4 pt-2">
+                <a href="#register" data-route="register" class="btn-esports-primary px-7 py-3.5 rounded-lg font-heading font-bold text-sm uppercase tracking-wider shadow-lg flex items-center gap-3">
+                  <i class="fa-solid fa-gamepad text-lg"></i> Register 12-Man Slot
+                </a>
+                <a href="#idp" data-route="idp" class="btn-esports-secondary px-7 py-3.5 rounded-lg font-heading font-bold text-sm uppercase tracking-wider flex items-center gap-3">
+                  <i class="fa-solid fa-key text-amber-400"></i> Room ID & Pass (IDP)
+                </a>
+                <button onclick="openAuthModal()" class="px-6 py-3.5 rounded-lg font-heading font-semibold text-sm bg-slate-900 text-slate-200 border border-slate-700 hover:border-amber-400 transition-colors flex items-center gap-2">
+                  <i class="fa-solid fa-user-plus text-base text-amber-400"></i> Player Login / Sign Up
+                </button>
+              </div>
+
+              <!-- War Countdown Box with 3D Tilt -->
+              <div class="pt-4 card-3d-wrap inline-block">
+                <div class="card-3d glass-panel p-4 rounded-xl text-left border border-amber-500/30">
+                  <div class="card-glare"></div>
+                  <span class="text-xs font-tech text-amber-400 uppercase tracking-widest block mb-2 font-bold">
+                    <i class="fa-regular fa-clock mr-1"></i> NEXT 12-SQUAD MATCH DAY STARTS IN:
+                  </span>
+                  <div class="flex items-center gap-3 font-display font-extrabold text-3xl sm:text-4xl text-white">
+                    <div class="text-center bg-slate-950/90 px-3.5 py-1.5 rounded-lg border border-slate-800">
+                      <span id="cd-days" class="text-amber-400 block font-tech">00</span>
+                      <span class="text-[10px] font-tech text-slate-400 block uppercase font-normal">DAYS</span>
+                    </div>
+                    <span class="text-amber-500">:</span>
+                    <div class="text-center bg-slate-950/90 px-3.5 py-1.5 rounded-lg border border-slate-800">
+                      <span id="cd-hours" class="text-amber-400 block font-tech">00</span>
+                      <span class="text-[10px] font-tech text-slate-400 block uppercase font-normal">HRS</span>
+                    </div>
+                    <span class="text-amber-500">:</span>
+                    <div class="text-center bg-slate-950/90 px-3.5 py-1.5 rounded-lg border border-slate-800">
+                      <span id="cd-mins" class="text-amber-400 block font-tech">00</span>
+                      <span class="text-[10px] font-tech text-slate-400 block uppercase font-normal">MIN</span>
+                    </div>
+                    <span class="text-amber-500">:</span>
+                    <div class="text-center bg-slate-950/90 px-3.5 py-1.5 rounded-lg border border-slate-800">
+                      <span id="cd-secs" class="text-red-400 block font-tech">00</span>
+                      <span class="text-[10px] font-tech text-slate-400 block uppercase font-normal">SEC</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Right Hero: 3D Gyroscope Orbital Arena Crest -->
+            <div class="lg:col-span-5 flex justify-center relative">
+              <div class="gyro-container">
+                <div class="gyro-ring gyro-ring-1"></div>
+                <div class="gyro-ring gyro-ring-2"></div>
+                <div class="gyro-ring gyro-ring-3"></div>
+                <div class="absolute inset-0 bg-amber-500/15 rounded-full blur-3xl"></div>
+                
+                <div class="gyro-core">
+                  <img src="assets/images/logo.png" alt="Insane Power Esports" class="w-56 h-56 sm:w-72 sm:h-72 object-contain drop-shadow-[0_0_35px_rgba(245,158,11,0.5)]">
+                </div>
+
+                <div class="absolute -bottom-4 bg-black/85 backdrop-blur-md px-4 py-1.5 rounded-full border border-amber-500/40 text-amber-400 font-tech text-xs font-bold uppercase tracking-widest shadow-xl flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> 48-SLOT ARENA 3D
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- ACTIVE FREE FIRE WEEKLY WARS SECTION -->
+      <div class="py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-t border-white/10">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-10">
+          <div>
+            <div class="inline-flex items-center gap-2 text-amber-400 font-tech text-xs font-bold uppercase tracking-widest mb-1">
+              <i class="fa-solid fa-fire text-red-500"></i> FREE FIRE MAX 48 SLOTS
+            </div>
+            <h2 class="font-display font-extrabold text-3xl sm:text-4xl text-white">
+              WEEKLY WARS <span class="text-amber-400">4-DAY ARENA</span>
+            </h2>
+            <p class="text-slate-400 text-sm max-w-xl mt-1">
+              Slots are allocated line-wise: Slots 1–12 (Day 1), Slots 13–24 (Day 2), Slots 25–36 (Day 3), Slots 37–48 (Day 4).
+            </p>
+          </div>
+
+          <a href="#register" data-route="register" class="mt-4 md:mt-0 text-sm font-heading font-bold text-amber-400 hover:text-amber-300 flex items-center gap-2 uppercase tracking-wider">
+            Open Registration Hub <i class="fa-solid fa-arrow-right"></i>
+          </a>
+        </div>
+
+        <!-- Weekly Wars Cards Container -->
+        <div id="weekly-wars-container" class="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <!-- Populated by renderWeeklyWars() -->
+        </div>
+      </div>
+
+      <!-- 4-DAY GROUP ALLOCATION INFO STRIP WITH 3D TILT -->
+      <div class="py-16 bg-slate-950/60 border-t border-white/10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          
+          <div class="text-center max-w-2xl mx-auto mb-12">
+            <span class="text-xs font-tech text-amber-400 uppercase tracking-widest font-bold">STRUCTURED 48 SLOTS</span>
+            <h2 class="font-display font-extrabold text-3xl sm:text-4xl text-white mt-1">4-DAY <span class="text-amber-400">MATCH SCHEDULE</span></h2>
+            <p class="text-slate-400 text-sm mt-2">12 Squads battle per day. Only the active 12 Captains get access to each day's Room ID & Password!</p>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            
+            <div class="card-3d-wrap">
+              <div class="card-3d glass-panel border-beam-card p-6 rounded-2xl border-amber-500/30 relative overflow-hidden h-full">
+                <div class="card-glare"></div>
+                <div class="absolute top-0 right-0 bg-amber-500 text-black text-[10px] font-tech font-bold px-3 py-1 rounded-bl">GROUP A</div>
+                <span class="text-xs font-tech text-amber-400 font-bold block mb-1">DAY 1 (SLOTS 1–12)</span>
+                <h3 class="font-display font-bold text-xl text-white">Opening 12 Squads</h3>
+                <p class="text-slate-400 text-xs mt-2">The first 12 registered teams compete on Day 1. Only these 12 IGLs receive Day 1 Room IDP.</p>
+                <div class="mt-4 pt-3 border-t border-white/10 flex justify-between text-xs font-tech">
+                  <span class="text-slate-400">Slots:</span>
+                  <span class="text-amber-400 font-bold">#1 to #12</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="card-3d-wrap">
+              <div class="card-3d glass-panel p-6 rounded-2xl border-white/10 relative overflow-hidden h-full">
+                <div class="card-glare"></div>
+                <div class="absolute top-0 right-0 bg-slate-800 text-slate-300 text-[10px] font-tech font-bold px-3 py-1 rounded-bl">GROUP B</div>
+                <span class="text-xs font-tech text-slate-400 font-bold block mb-1">DAY 2 (SLOTS 13–24)</span>
+                <h3 class="font-display font-bold text-xl text-white">Second 12 Squads</h3>
+                <p class="text-slate-400 text-xs mt-2">Next 12 squads in registration order. Day 2 Captains unlock their IDP on Day 2.</p>
+                <div class="mt-4 pt-3 border-t border-white/10 flex justify-between text-xs font-tech">
+                  <span class="text-slate-400">Slots:</span>
+                  <span class="text-slate-300 font-bold">#13 to #24</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="card-3d-wrap">
+              <div class="card-3d glass-panel p-6 rounded-2xl border-white/10 relative overflow-hidden h-full">
+                <div class="card-glare"></div>
+                <div class="absolute top-0 right-0 bg-slate-800 text-slate-300 text-[10px] font-tech font-bold px-3 py-1 rounded-bl">GROUP C</div>
+                <span class="text-xs font-tech text-slate-400 font-bold block mb-1">DAY 3 (SLOTS 25–36)</span>
+                <h3 class="font-display font-bold text-xl text-white">Third 12 Squads</h3>
+                <p class="text-slate-400 text-xs mt-2">Registered teams 25–36. IDP unlocks exclusively for Day 3 Captains on match day.</p>
+                <div class="mt-4 pt-3 border-t border-white/10 flex justify-between text-xs font-tech">
+                  <span class="text-slate-400">Slots:</span>
+                  <span class="text-slate-300 font-bold">#25 to #36</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="card-3d-wrap">
+              <div class="card-3d glass-panel p-6 rounded-2xl border-white/10 relative overflow-hidden h-full">
+                <div class="card-glare"></div>
+                <div class="absolute top-0 right-0 bg-slate-800 text-slate-300 text-[10px] font-tech font-bold px-3 py-1 rounded-bl">GROUP D</div>
+                <span class="text-xs font-tech text-slate-400 font-bold block mb-1">DAY 4 (SLOTS 37–48)</span>
+                <h3 class="font-display font-bold text-xl text-white">Final 12 Squads</h3>
+                <p class="text-slate-400 text-xs mt-2">Registered teams 37–48. IDP unlocks exclusively for Day 4 Captains on match day.</p>
+                <div class="mt-4 pt-3 border-t border-white/10 flex justify-between text-xs font-tech">
+                  <span class="text-slate-400">Slots:</span>
+                  <span class="text-slate-300 font-bold">#37 to #48</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ==================== VIEW 2: 4-DAY WARS ==================== -->
+    <section id="view-wars" class="page-section hidden py-12">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <div class="mb-10 text-center max-w-3xl mx-auto">
+          <span class="text-xs font-tech text-amber-400 uppercase tracking-widest font-bold">INSANE POWER TOURNAMENTS</span>
+          <h1 class="font-display font-black text-4xl sm:text-5xl text-white mt-1">4-DAY <span class="text-amber-400">WEEKLY WARS</span></h1>
+          <p class="text-slate-400 text-sm mt-2">
+            Every week, 48 Free Fire teams are divided line-wise across 4 match days (12 squads per day). Build your squad once and compete in all weekly editions!
+          </p>
+        </div>
+
+        <div id="wars-list-container" class="space-y-8">
+          <!-- Populated by renderWeeklyWars() -->
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ==================== VIEW 3: SQUAD REGISTRATION & BUILDER ==================== -->
+    <section id="view-register" class="page-section hidden py-12">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <div class="mb-8 text-center max-w-3xl mx-auto">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 text-amber-400 text-xs font-tech font-bold uppercase mb-2">
+            <i class="fa-solid fa-users-gear"></i> PERMANENT SQUAD ROSTER BUILDER
+          </div>
+          <h1 class="font-display font-black text-3xl sm:text-4xl text-white">FREE FIRE SQUAD <span class="text-amber-400">REGISTRATION</span></h1>
+          <p class="text-slate-400 text-xs sm:text-sm mt-1">
+            Rules: Every player must create an account first. Enter their <strong class="text-amber-400">@username</strong> to fetch verified IGN & UID. Once created, your 4+1 roster is locked and can be reused for all weekly wars!
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          
+          <!-- Left: Squad Creation Form / Locked Squad View -->
+          <div class="lg:col-span-8">
+            <div id="squad-builder-container">
+              <!-- Injected by renderSquadBuilder() -->
+            </div>
+          </div>
+
+          <!-- Right: Tournament Slot Status & Quick Guide -->
+          <div class="lg:col-span-4 space-y-6">
+            
+            <div class="card-3d-wrap">
+              <div class="card-3d glass-panel p-6 rounded-2xl border border-amber-500/30">
+                <div class="card-glare"></div>
+                <div class="flex items-center justify-between mb-4">
+                  <h3 class="font-display font-bold text-lg text-white">48-Slot Line Allocation</h3>
+                  <span class="text-[10px] font-tech text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/30 font-bold">Auto Grouping</span>
+                </div>
+                
+                <p class="text-xs text-slate-300 mb-4">
+                  Slots are assigned strictly in chronological order of registration:
+                </p>
+
+                <div class="space-y-2.5 text-xs font-tech">
+                  <div class="flex justify-between items-center p-2.5 rounded-lg bg-slate-900/80 border border-slate-800">
+                    <span class="text-amber-400 font-bold">Group A (Day 1):</span>
+                    <span class="text-slate-300 font-bold">Slots #1 to #12</span>
+                  </div>
+                  <div class="flex justify-between items-center p-2.5 rounded-lg bg-slate-900/80 border border-slate-800">
+                    <span class="text-slate-400">Group B (Day 2):</span>
+                    <span class="text-slate-300">Slots #13 to #24</span>
+                  </div>
+                  <div class="flex justify-between items-center p-2.5 rounded-lg bg-slate-900/80 border border-slate-800">
+                    <span class="text-slate-400">Group C (Day 3):</span>
+                    <span class="text-slate-300">Slots #25 to #36</span>
+                  </div>
+                  <div class="flex justify-between items-center p-2.5 rounded-lg bg-slate-900/80 border border-slate-800">
+                    <span class="text-slate-400">Group D (Day 4):</span>
+                    <span class="text-slate-300">Slots #37 to #48</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card-3d-wrap">
+              <div class="card-3d glass-panel p-6 rounded-2xl border border-white/10">
+                <div class="card-glare"></div>
+                <h3 class="font-display font-bold text-lg text-white mb-3">Permanent Roster Rule</h3>
+                <ul class="space-y-2.5 text-xs text-slate-400">
+                  <li class="flex items-start gap-2">
+                    <i class="fa-solid fa-check text-amber-400 mt-0.5"></i>
+                    <span>Once 4 core players + 1 optional sub are locked, they cannot create duplicate squads.</span>
+                  </li>
+                  <li class="flex items-start gap-2">
+                    <i class="fa-solid fa-check text-amber-400 mt-0.5"></i>
+                    <span>Use your existing squad for 1-click registration across all future Weekly Wars.</span>
+                  </li>
+                  <li class="flex items-start gap-2">
+                    <i class="fa-solid fa-check text-amber-400 mt-0.5"></i>
+                    <span>Only the squad Captain receives the Day-Wise Room ID & Password.</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ==================== VIEW 4: ROOM ID & PASS (IDP PORTAL) ==================== -->
+    <section id="view-idp" class="page-section hidden py-12">
+      <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <div class="mb-10 text-center max-w-3xl mx-auto">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 text-amber-400 text-xs font-tech font-bold uppercase mb-2">
+            <i class="fa-solid fa-shield-halved"></i> SECURE DAY-WISE IDP DISPATCH
+          </div>
+          <h1 class="font-display font-black text-3xl sm:text-4xl text-white">ROOM ID & <span class="text-amber-400">PASSWORD (IDP)</span></h1>
+          <p class="text-slate-400 text-xs sm:text-sm mt-1">
+            Strict Access: Only the 12 Captains assigned to today's match day can unlock the Room ID & Password.
+          </p>
+        </div>
+
+        <div id="idp-portal-container">
+          <!-- Populated by renderIdpPortal() -->
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ==================== VIEW 5: LEADERBOARD / POINTS TABLE ==================== -->
+    <section id="view-leaderboard" class="page-section hidden py-12">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <div class="mb-8 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
+          <div>
+            <div class="inline-flex items-center gap-2 text-amber-400 font-tech text-xs font-bold uppercase tracking-widest mb-1">
+              <i class="fa-solid fa-trophy"></i> OFFICIAL STANDINGS
+            </div>
+            <h1 class="font-display font-black text-3xl sm:text-4xl text-white">WEEKLY WARS <span class="text-amber-400">POINTS TABLE</span></h1>
+            <p class="text-slate-400 text-xs sm:text-sm mt-1">
+              Official Free Fire Esports Scoring (Placement Points + Kill Points). Standings are uploaded after each match day concludes.
+            </p>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <button onclick="window.print()" class="btn-esports-secondary px-4 py-2 rounded-lg text-xs font-heading font-bold uppercase">
+              <i class="fa-solid fa-print mr-1"></i> Print / Save PDF
+            </button>
+          </div>
+        </div>
+
+        <div id="leaderboard-container">
+          <!-- Populated by renderLeaderboard() -->
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ==================== VIEW 6: RULES & FAQ ==================== -->
+    <section id="view-rules" class="page-section hidden py-12">
+      <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <div class="mb-10 text-center max-w-3xl mx-auto">
+          <span class="text-xs font-tech text-amber-400 uppercase tracking-widest font-bold">FAIR PLAY & INTEGRITY</span>
+          <h1 class="font-display font-black text-3xl sm:text-4xl text-white mt-1">OFFICIAL <span class="text-amber-400">RULEBOOK & FAQ</span></h1>
+          <p class="text-slate-400 text-xs sm:text-sm mt-1">
+            Free Fire MAX Weekly Wars 48-Slot tournament rules, slot allocation guidelines, and fair play standards.
+          </p>
+        </div>
+
+        <!-- Rules Accordion Container -->
+        <div id="faqs-container" class="space-y-4">
+          <!-- Populated by renderFaqs() -->
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ==================== VIEW 7: ADMIN / ORGANIZER PORTAL ==================== -->
+    <section id="view-admin" class="page-section hidden py-12">
+      <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <div class="mb-8 flex justify-between items-center">
+          <div>
+            <span class="text-xs font-tech text-red-400 uppercase font-bold tracking-widest">ORGANIZER PORTAL</span>
+            <h1 class="font-display font-black text-3xl text-white">ADMIN <span class="text-amber-400">CONTROL CENTER</span></h1>
+          </div>
+          <span class="px-3 py-1 bg-red-500/20 text-red-400 border border-red-500/30 rounded-lg text-xs font-tech font-bold">RESTRICTED ACCESS</span>
+        </div>
+
+        <div class="space-y-8">
+          
+          <!-- IDP Room Dispatch Control -->
+          <div class="card-3d-wrap">
+            <div class="card-3d glass-panel p-6 sm:p-8 rounded-2xl border border-amber-500/30">
+              <div class="card-glare"></div>
+              <h3 class="font-display font-bold text-xl text-white mb-2">
+                <i class="fa-solid fa-key text-amber-400 mr-2"></i> Day-Wise Room ID & Password Dispatch
+              </h3>
+              <p class="text-xs text-slate-400 mb-6 font-normal">
+                Select which match day is active today and enter the Custom Room ID and Password. Only the 12 Captains assigned to the active day will receive access.
+              </p>
+
+              <form id="admin-idp-form" class="space-y-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-xs font-tech text-slate-400 uppercase mb-1">Active Match Day</label>
+                    <select id="admin-idp-day" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white text-xs font-tech focus:border-amber-400 focus:outline-none">
+                      <option value="1">Day 1 - Group A (Slots 1 to 12)</option>
+                      <option value="2">Day 2 - Group B (Slots 13 to 24)</option>
+                      <option value="3">Day 3 - Group C (Slots 25 to 36)</option>
+                      <option value="4">Day 4 - Group D (Slots 37 to 48)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-tech text-slate-400 uppercase mb-1">Scheduled Match Time</label>
+                    <input type="text" id="admin-idp-time" placeholder="e.g. 6:00 PM IST" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white text-xs font-tech focus:border-amber-400 focus:outline-none">
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-xs font-tech text-slate-400 uppercase mb-1">Custom Room ID</label>
+                    <input type="text" id="admin-idp-room" placeholder="e.g. 8492019" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white text-xs font-tech focus:border-amber-400 focus:outline-none">
+                  </div>
+                  <div>
+                    <label class="block text-xs font-tech text-slate-400 uppercase mb-1">Custom Room Password</label>
+                    <input type="text" id="admin-idp-pass" placeholder="e.g. IP777" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white text-xs font-tech focus:border-amber-400 focus:outline-none">
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-2 pt-2">
+                  <input type="checkbox" id="admin-idp-release" class="w-4 h-4 rounded border-slate-700 text-amber-500 focus:ring-amber-400 bg-slate-900">
+                  <label for="admin-idp-release" class="text-xs font-tech text-slate-300">Release ID & Password Immediately to Active 12 Captains</label>
+                </div>
+
+                <button type="submit" class="btn-esports-primary py-3 px-6 rounded-lg font-heading font-bold text-xs uppercase tracking-wider">
+                  Save & Update Day IDP
+                </button>
+              </form>
+            </div>
+          </div>
+
+          <!-- Points Table Post-Match Publisher -->
+          <div class="card-3d-wrap">
+            <div class="card-3d glass-panel p-6 sm:p-8 rounded-2xl border border-white/10">
+              <div class="card-glare"></div>
+              <h3 class="font-display font-bold text-xl text-white mb-2">
+                <i class="fa-solid fa-trophy text-amber-400 mr-2"></i> Post-Match Points Table Upload
+              </h3>
+              <p class="text-xs text-slate-400 mb-6 font-normal">
+                Upload points table after today's 12-squad matches conclude.
+              </p>
+
+              <form id="admin-points-form" class="space-y-4">
+                <div>
+                  <label class="block text-xs font-tech text-slate-400 uppercase mb-1">Tournament Edition Title</label>
+                  <input type="text" id="admin-points-season" placeholder="e.g. FREE FIRE WEEKLY WARS - SEASON 12" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white text-xs font-tech focus:border-amber-400 focus:outline-none">
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-xs font-tech text-slate-400 uppercase mb-1">MVP Player IGN</label>
+                    <input type="text" id="admin-points-mvp-ign" placeholder="e.g. IP・THUNDER" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white text-xs font-tech focus:border-amber-400 focus:outline-none">
+                  </div>
+                  <div>
+                    <label class="block text-xs font-tech text-slate-400 uppercase mb-1">MVP Team Name</label>
+                    <input type="text" id="admin-points-mvp-team" placeholder="e.g. TOTAL DOMINANCE" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white text-xs font-tech focus:border-amber-400 focus:outline-none">
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-xs font-tech text-slate-400 uppercase mb-1">MVP Total Kills</label>
+                    <input type="number" id="admin-points-mvp-kills" placeholder="e.g. 24" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white text-xs font-tech focus:border-amber-400 focus:outline-none">
+                  </div>
+                  <div>
+                    <label class="block text-xs font-tech text-slate-400 uppercase mb-1">MVP Total Damage</label>
+                    <input type="text" id="admin-points-mvp-damage" placeholder="e.g. 4,850" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white text-xs font-tech focus:border-amber-400 focus:outline-none">
+                  </div>
+                </div>
+
+                <div>
+                  <div class="flex justify-between items-center mb-1">
+                    <label class="block text-xs font-tech text-slate-400 uppercase">
+                      Squad Standings Data (Paste CSV Format)
+                    </label>
+                    <span class="text-[10px] text-amber-400 font-tech">Format: TeamName, Matches, Booyahs, PlacePts, KillPts, TotalPts</span>
+                  </div>
+                  <textarea id="admin-points-raw-data" rows="6" placeholder="TOTAL DOMINANCE, 4, 2, 28, 36, 64&#10;GODLIKE SQUAD, 4, 1, 22, 30, 52&#10;SOUL ESPORTS, 4, 1, 18, 28, 46&#10;RECKONING WARRIORS, 4, 0, 14, 24, 38" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white text-xs font-mono focus:border-amber-400 focus:outline-none"></textarea>
+                </div>
+
+                <button type="submit" class="btn-esports-primary py-3 px-6 rounded-lg font-heading font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2">
+                  <i class="fa-solid fa-cloud-arrow-up"></i> Publish Points Table Live
+                </button>
+
+              </form>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ==================== FOOTER ==================== -->
+  <footer class="bg-[#030508] border-t border-white/10 pt-12 pb-8 relative z-10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      
+      <div class="flex flex-col md:flex-row justify-between items-center gap-6 mb-8 border-b border-slate-800/80 pb-8">
+        <div class="flex items-center gap-3">
+          <img src="assets/images/logo.png" alt="IP Esports" class="w-11 h-11 object-contain">
+          <div>
+            <span class="font-display font-extrabold text-xl text-white block leading-none">INSANE POWER</span>
+            <span class="text-[10px] font-tech text-amber-400 uppercase font-semibold">FREE FIRE WEEKLY WARS</span>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-4 text-xs font-heading font-semibold text-slate-400">
+          <a href="#home" data-route="home" class="hover:text-amber-400">Home</a>
+          <a href="#wars" data-route="wars" class="hover:text-amber-400">4-Day Wars</a>
+          <a href="#register" data-route="register" class="hover:text-amber-400">Squad Registration</a>
+          <a href="#idp" data-route="idp" class="hover:text-amber-400">Room ID & Pass (IDP)</a>
+          <a href="#leaderboard" data-route="leaderboard" class="hover:text-amber-400">Points Table</a>
+          <a href="#rules" data-route="rules" class="hover:text-amber-400">Rulebook</a>
+        </div>
+
+        <div class="flex items-center gap-3 text-slate-400 text-base">
+          <a href="https://youtube.com/@InsanePowerEsports" target="_blank" class="w-9 h-9 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center hover:text-red-500 transition-colors"><i class="fa-brands fa-youtube"></i></a>
+          <a href="https://instagram.com/insanepoweresports" target="_blank" class="w-9 h-9 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center hover:text-pink-500 transition-colors"><i class="fa-brands fa-instagram"></i></a>
+        </div>
+      </div>
+
+      <div class="flex flex-col sm:flex-row justify-between items-center text-xs text-slate-500 font-tech">
+        <p>&copy; 2026 INSANE POWER ESPORTS &bull; 48-SLOT FREE FIRE WEEKLY WARS. All Rights Reserved.</p>
+        <p class="mt-2 sm:mt-0 text-slate-400">India's Premier Free Fire Weekly Battlegrounds.</p>
+      </div>
+
+    </div>
+  </footer>
+
+  <!-- ==================== PLAYER AUTH MODAL ==================== -->
+  <div id="auth-modal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md hidden flex items-center justify-center p-4 overflow-y-auto">
+    <div class="card-3d glass-panel w-full max-w-md rounded-2xl border border-amber-500/40 p-6 relative max-h-[90vh] overflow-y-auto shadow-2xl">
+      <div class="card-glare"></div>
+      <button onclick="closeAuthModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white p-2 text-lg z-30">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
+      <div class="flex items-center gap-3 mb-6">
+        <img src="assets/images/logo.png" alt="IP Esports" class="w-10 h-10 object-contain">
+        <div>
+          <h3 class="font-display font-extrabold text-2xl text-white leading-none">PLAYER <span class="text-amber-400">PORTAL</span></h3>
+          <span class="text-[10px] font-tech text-slate-400 font-semibold">FREE FIRE ATHLETE AUTHENTICATION</span>
+        </div>
+      </div>
+
+      <!-- Google Sign In Button -->
+      <div class="mb-4">
+        <button type="button" onclick="handleGoogleSignInClick()" class="btn-google w-full py-2.5 px-4 flex items-center justify-center gap-3 text-xs font-bold uppercase tracking-wider">
+          <svg class="w-4 h-4" viewBox="0 0 24 24">
+            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+          </svg>
+          Continue with Google
+        </button>
+      </div>
+
+      <div class="relative flex py-2 items-center mb-4">
+        <div class="flex-grow border-t border-slate-800"></div>
+        <span class="flex-shrink mx-3 text-slate-500 text-[10px] font-tech font-bold uppercase">OR USERNAME LOGIN</span>
+        <div class="flex-grow border-t border-slate-800"></div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2 p-1 bg-slate-900 rounded-lg mb-6 border border-slate-800">
+        <button id="auth-tab-login" class="py-2 text-xs font-heading font-bold uppercase rounded-md bg-amber-500 text-black transition-colors">
+          Login
+        </button>
+        <button id="auth-tab-signup" class="py-2 text-xs font-heading font-bold uppercase rounded-md text-slate-400 hover:text-white transition-colors">
+          Create Account
+        </button>
+      </div>
+
+      <!-- Login Pane -->
+      <div id="auth-pane-login" class="space-y-4">
+        <form id="auth-login-form" class="space-y-4">
+          <div>
+            <label class="block text-xs font-tech text-slate-400 uppercase mb-1">Your Registered Username</label>
+            <div class="relative">
+              <span class="absolute left-3 top-3 text-slate-500 text-xs font-tech">@</span>
+              <input type="text" id="login-username" required placeholder="thunder_igl" class="w-full bg-slate-950 border border-slate-700 rounded-lg pl-7 pr-3 py-2.5 text-white text-xs font-tech focus:border-amber-400 focus:outline-none">
+            </div>
+            <span class="text-[10px] text-slate-500 font-tech mt-1 block">Quick Demo Logins: thunder_igl, viper_sniper, blaze_rusher, shadow_ff</span>
+          </div>
+
+          <button type="submit" class="w-full btn-esports-primary py-3 rounded-lg font-heading font-bold text-xs uppercase tracking-wider">
+            Login As Player / Captain
+          </button>
+        </form>
+      </div>
+
+      <!-- Signup Pane -->
+      <div id="auth-pane-signup" class="hidden space-y-4">
+        <form id="auth-signup-form" class="space-y-3">
+          <div>
+            <label class="block text-xs font-tech text-slate-400 uppercase mb-1">Choose Username <span class="text-red-500">*</span></label>
+            <div class="relative">
+              <span class="absolute left-3 top-3 text-slate-500 text-xs font-tech">@</span>
+              <input type="text" id="signup-username" required placeholder="your_unique_username" class="w-full bg-slate-950 border border-slate-700 rounded-lg pl-7 pr-3 py-2.5 text-white text-xs font-tech focus:border-amber-400 focus:outline-none">
+            </div>
+            <span class="text-[10px] text-slate-400 font-tech">Your IGL will use this username to add you to their squad.</span>
+          </div>
+
+          <div>
+            <label class="block text-xs font-tech text-slate-400 uppercase mb-1">Full Name <span class="text-red-500">*</span></label>
+            <input type="text" id="signup-name" required placeholder="Player Real Name" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-white text-xs font-tech focus:border-amber-400 focus:outline-none">
+          </div>
+
+          <div>
+            <label class="block text-xs font-tech text-slate-400 uppercase mb-1">Free Fire IGN (In-Game Name) <span class="text-red-500">*</span></label>
+            <input type="text" id="signup-ign" required placeholder="e.g. IP・HUNTER" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-white text-xs font-tech focus:border-amber-400 focus:outline-none">
+          </div>
+
+          <div>
+            <label class="block text-xs font-tech text-slate-400 uppercase mb-1">Free Fire Character UID <span class="text-red-500">*</span></label>
+            <input type="text" id="signup-uid" required placeholder="e.g. 1928472910" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-white text-xs font-tech focus:border-amber-400 focus:outline-none">
+          </div>
+
+          <div>
+            <label class="block text-xs font-tech text-slate-400 uppercase mb-1">WhatsApp Phone Number <span class="text-red-500">*</span></label>
+            <input type="tel" id="signup-phone" required placeholder="+91 98765 43210" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-white text-xs font-tech focus:border-amber-400 focus:outline-none">
+          </div>
+
+          <button type="submit" class="w-full btn-esports-primary py-3 rounded-lg font-heading font-bold text-xs uppercase tracking-wider">
+            Register Player Account
+          </button>
+        </form>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ==================== GOOGLE PROFILE COMPLETION MODAL ==================== -->
+  <div id="google-profile-modal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md hidden flex items-center justify-center p-4 overflow-y-auto">
+    <div class="card-3d glass-panel w-full max-w-md rounded-2xl border border-amber-500/50 p-6 relative max-h-[90vh] overflow-y-auto shadow-2xl">
+      <div class="card-glare"></div>
+      <div class="flex items-center gap-3 mb-5">
+        <div class="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center border border-amber-500/40">
+          <i class="fa-solid fa-gamepad text-amber-400"></i>
+        </div>
+        <div>
+          <h3 class="font-display font-extrabold text-xl text-white">Complete Free Fire Profile</h3>
+          <p class="text-[11px] font-tech text-slate-400">Link your In-Game Character details</p>
+        </div>
+      </div>
+
+      <form id="google-profile-form" class="space-y-3">
+        <div>
+          <label class="block text-xs font-tech text-slate-400 uppercase mb-1">Unique Username <span class="text-red-500">*</span></label>
+          <div class="relative">
+            <span class="absolute left-3 top-2.5 text-slate-500 text-xs font-tech">@</span>
+            <input type="text" id="g-profile-username" required class="w-full bg-slate-950 border border-slate-700 rounded-lg pl-7 pr-3 py-2 text-white text-xs font-tech focus:border-amber-400 focus:outline-none">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-tech text-slate-400 uppercase mb-1">Free Fire IGN (In-Game Name) <span class="text-red-500">*</span></label>
+          <input type="text" id="g-profile-ign" required placeholder="e.g. IP・LEGEND" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-white text-xs font-tech focus:border-amber-400 focus:outline-none">
+        </div>
+
+        <div>
+          <label class="block text-xs font-tech text-slate-400 uppercase mb-1">Free Fire Character UID <span class="text-red-500">*</span></label>
+          <input type="text" id="g-profile-uid" required placeholder="e.g. 1928472910" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-white text-xs font-tech focus:border-amber-400 focus:outline-none">
+        </div>
+
+        <div>
+          <label class="block text-xs font-tech text-slate-400 uppercase mb-1">WhatsApp Phone Number <span class="text-red-500">*</span></label>
+          <input type="tel" id="g-profile-phone" required placeholder="+91 98765 43210" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-white text-xs font-tech focus:border-amber-400 focus:outline-none">
+        </div>
+
+        <button type="submit" class="w-full btn-esports-primary py-3 rounded-lg font-heading font-bold text-xs uppercase tracking-wider mt-4">
+          Save & Access Tournaments
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================== TOURNAMENT DETAILS MODAL ==================== -->
+  <div id="tournament-details-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4 overflow-y-auto">
+    <div class="card-3d glass-panel w-full max-w-3xl rounded-2xl border border-amber-500/40 p-6 relative max-h-[90vh] overflow-y-auto shadow-2xl">
+      <div class="card-glare"></div>
+      <button onclick="closeTournamentModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white p-2 text-lg z-30">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+      <div id="tournament-modal-body">
+        <!-- Injected by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MATCH PASS / TICKET MODAL ==================== -->
+  <div id="pass-modal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md hidden flex items-center justify-center p-4 overflow-y-auto">
+    <div class="w-full max-w-2xl relative max-h-[90vh] overflow-y-auto">
+      <button onclick="closePassModal()" class="absolute -top-10 right-0 text-slate-300 hover:text-white text-sm font-semibold">
+        <i class="fa-solid fa-xmark mr-1"></i> Close Pass
+      </button>
+      <div id="pass-modal-body">
+        <!-- Injected by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

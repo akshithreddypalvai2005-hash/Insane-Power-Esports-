@@ -1,0 +1,485 @@
+/* INSANE POWER ESPORTS - 3D INNOVATIVE ESPORTS STYLESHEET */
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+
+:root {
+  --ip-gold: #F59E0B;
+  --ip-gold-glow: rgba(245, 158, 11, 0.4);
+  --ip-amber: #D97706;
+  --ip-red: #EF4444;
+  --ip-red-glow: rgba(239, 68, 68, 0.4);
+  --ip-cyan: #06B6D4;
+  --ip-cyan-glow: rgba(6, 182, 212, 0.35);
+  
+  --ip-dark-950: #05070C;
+  --ip-dark-900: #0A0D15;
+  --ip-dark-800: #101623;
+  --ip-dark-700: #172033;
+  --ip-dark-600: #202D47;
+  
+  --ip-border: rgba(245, 158, 11, 0.22);
+  --ip-border-subtle: rgba(255, 255, 255, 0.08);
+  --ip-text-main: #F8FAFC;
+  --ip-text-muted: #94A3B8;
+  
+  --font-display: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-heading: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-body: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-tech: 'JetBrains Mono', monospace;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--ip-dark-950);
+  color: var(--ip-text-main);
+  overflow-x: hidden;
+  background-image: 
+    radial-gradient(circle at 15% 15%, rgba(245, 158, 11, 0.06) 0%, transparent 45%),
+    radial-gradient(circle at 85% 65%, rgba(239, 68, 68, 0.05) 0%, transparent 45%),
+    radial-gradient(circle at 50% 95%, rgba(6, 182, 212, 0.04) 0%, transparent 50%),
+    linear-gradient(rgba(10, 13, 21, 0.96), rgba(10, 13, 21, 0.96));
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--ip-dark-950);
+}
+::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--ip-gold);
+}
+
+/* Typography */
+.font-display { font-family: var(--font-display); }
+.font-heading { font-family: var(--font-heading); }
+.font-body { font-family: var(--font-body); }
+.font-tech { font-family: var(--font-tech); }
+
+/* Glow Utilities */
+.text-glow-gold {
+  text-shadow: 0 0 25px var(--ip-gold-glow), 0 0 50px rgba(245, 158, 11, 0.2);
+}
+.box-glow-gold {
+  box-shadow: 0 0 30px rgba(245, 158, 11, 0.2), inset 0 0 15px rgba(245, 158, 11, 0.05);
+}
+
+/* ==================== 3D INTERACTIVE TILT CARDS ==================== */
+.card-3d-wrap {
+  perspective: 1200px;
+  transform-style: preserve-3d;
+}
+
+.card-3d {
+  position: relative;
+  transition: transform 0.15s ease-out, box-shadow 0.25s ease, border-color 0.25s ease;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+.card-3d:hover {
+  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.8), 0 0 25px rgba(245, 158, 11, 0.25);
+}
+
+.card-3d-layer {
+  transform: translateZ(30px);
+  transform-style: preserve-3d;
+}
+
+.card-3d-layer-deep {
+  transform: translateZ(50px);
+}
+
+/* Specular Glare Effect */
+.card-glare {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.12), transparent 70%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  mix-blend-mode: overlay;
+  z-index: 20;
+}
+
+/* ==================== 3D GYROSCOPE ORBITAL RINGS ==================== */
+.gyro-container {
+  width: 320px;
+  height: 320px;
+  position: relative;
+  perspective: 1000px;
+  transform-style: preserve-3d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (min-width: 640px) {
+  .gyro-container {
+    width: 380px;
+    height: 380px;
+  }
+}
+
+.gyro-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  transform-style: preserve-3d;
+}
+
+.gyro-ring-1 {
+  border: 2px dashed rgba(245, 158, 11, 0.6);
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.3);
+  animation: gyroRotate1 12s linear infinite;
+}
+
+.gyro-ring-2 {
+  inset: 20px;
+  border: 1.5px solid rgba(6, 182, 212, 0.5);
+  border-top: 2.5px solid #06B6D4;
+  box-shadow: 0 0 20px rgba(6, 182, 212, 0.25);
+  animation: gyroRotate2 16s linear infinite reverse;
+}
+
+.gyro-ring-3 {
+  inset: 40px;
+  border: 1px dotted rgba(239, 68, 68, 0.6);
+  border-bottom: 2px solid #EF4444;
+  box-shadow: 0 0 15px rgba(239, 68, 68, 0.3);
+  animation: gyroRotate3 20s linear infinite;
+}
+
+@keyframes gyroRotate1 {
+  0% { transform: rotateX(65deg) rotateY(20deg) rotateZ(0deg); }
+  100% { transform: rotateX(65deg) rotateY(20deg) rotateZ(360deg); }
+}
+
+@keyframes gyroRotate2 {
+  0% { transform: rotateX(30deg) rotateY(70deg) rotateZ(0deg); }
+  100% { transform: rotateX(30deg) rotateY(70deg) rotateZ(360deg); }
+}
+
+@keyframes gyroRotate3 {
+  0% { transform: rotateX(75deg) rotateY(-40deg) rotateZ(0deg); }
+  100% { transform: rotateX(75deg) rotateY(-40deg) rotateZ(360deg); }
+}
+
+.gyro-core {
+  position: relative;
+  z-index: 10;
+  transform: translateZ(40px);
+  animation: float3D 4s ease-in-out infinite;
+}
+
+@keyframes float3D {
+  0%, 100% { transform: translateZ(40px) translateY(0px) rotateY(-5deg); }
+  50% { transform: translateZ(60px) translateY(-12px) rotateY(5deg); }
+}
+
+/* ==================== BORDER BEAM ANIMATION ==================== */
+.border-beam-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.border-beam-card::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  padding: 2px;
+  background: conic-gradient(from 0deg at 50% 50%, transparent 0%, #F59E0B 25%, #EF4444 50%, #06B6D4 75%, transparent 100%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: borderBeam 6s linear infinite;
+  pointer-events: none;
+  opacity: 0.8;
+}
+
+@keyframes borderBeam {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* ==================== HOLOGRAPHIC FOIL SHIMMER ==================== */
+.holo-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.holo-shimmer::after {
+  content: '';
+  position: absolute;
+  top: -100%;
+  left: -100%;
+  width: 300%;
+  height: 300%;
+  background: linear-gradient(
+    135deg,
+    transparent 20%,
+    rgba(245, 158, 11, 0.08) 35%,
+    rgba(6, 182, 212, 0.12) 50%,
+    rgba(239, 68, 68, 0.08) 65%,
+    transparent 80%
+  );
+  transform: rotate(25deg);
+  pointer-events: none;
+  animation: holoSweep 8s ease-in-out infinite;
+}
+
+@keyframes holoSweep {
+  0% { transform: translateY(-50%) rotate(25deg); }
+  50% { transform: translateY(50%) rotate(25deg); }
+  100% { transform: translateY(-50%) rotate(25deg); }
+}
+
+/* Glass Panels */
+.glass-panel {
+  background: rgba(16, 22, 35, 0.82);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--ip-border-subtle);
+  border-radius: 14px;
+  transition: all 0.25s ease;
+}
+
+.glass-panel:hover {
+  border-color: rgba(245, 158, 11, 0.35);
+}
+
+/* Tactical Cut Shape */
+.tactical-cut {
+  clip-path: polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px);
+}
+
+/* Buttons */
+.btn-esports-primary {
+  background: linear-gradient(135deg, #F59E0B 0%, #EA580C 100%);
+  color: #05070C;
+  font-family: var(--font-heading);
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  position: relative;
+  overflow: hidden;
+  border-radius: 8px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 16px rgba(245, 158, 11, 0.3);
+}
+
+.btn-esports-primary:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 25px rgba(245, 158, 11, 0.45);
+  color: #000;
+}
+
+.btn-esports-primary::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -60%;
+  width: 40%;
+  height: 200%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  transform: rotate(25deg);
+  transition: all 0.75s ease;
+}
+
+.btn-esports-primary:hover::after {
+  left: 140%;
+}
+
+.btn-esports-secondary {
+  background: rgba(23, 32, 51, 0.8);
+  color: #F59E0B;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  font-family: var(--font-heading);
+  font-weight: 700;
+  border-radius: 8px;
+  backdrop-filter: blur(8px);
+  transition: all 0.2s ease;
+}
+
+.btn-esports-secondary:hover {
+  background: rgba(245, 158, 11, 0.15);
+  border-color: #F59E0B;
+  color: #FFF;
+  box-shadow: 0 0 16px rgba(245, 158, 11, 0.25);
+  transform: translateY(-1px);
+}
+
+.btn-google {
+  background: #FFFFFF;
+  color: #1F2937;
+  font-family: var(--font-body);
+  font-weight: 700;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.btn-google:hover {
+  background: #F3F4F6;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+  transform: translateY(-1px);
+}
+
+/* Nav Link */
+.nav-link {
+  position: relative;
+  font-weight: 600;
+  transition: color 0.2s ease;
+}
+
+.nav-link.active {
+  color: #F59E0B !important;
+}
+
+.nav-link.active::after {
+  content: '';
+  position: absolute;
+  bottom: -6px;
+  left: 20%;
+  width: 60%;
+  height: 2px;
+  background: #F59E0B;
+  border-radius: 2px;
+  box-shadow: 0 0 10px #F59E0B;
+}
+
+/* Background Grids */
+.bg-grid-pattern {
+  background-size: 36px 36px;
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+}
+
+/* 3D Canvas Background Container */
+#three-canvas-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.65;
+}
+
+/* Toast styling */
+#toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 99999;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.toast-msg {
+  background: rgba(15, 23, 42, 0.96);
+  border-left: 4px solid var(--ip-gold);
+  border-top: 1px solid rgba(255,255,255,0.08);
+  border-right: 1px solid rgba(255,255,255,0.08);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.7), 0 0 15px rgba(245,158,11,0.15);
+  color: #fff;
+  padding: 14px 18px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  animation: slideInRight 0.3s ease;
+  min-width: 280px;
+  max-width: 420px;
+}
+
+@keyframes slideInRight {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+/* Table styling */
+.leaderboard-row {
+  transition: all 0.15s ease;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.leaderboard-row:hover {
+  background: rgba(245, 158, 11, 0.08);
+}
+
+.rank-1 {
+  background: linear-gradient(90deg, rgba(245, 158, 11, 0.18) 0%, rgba(18, 24, 38, 0.6) 100%);
+  border-left: 4px solid #F59E0B;
+}
+
+.rank-2 {
+  background: linear-gradient(90deg, rgba(148, 163, 184, 0.14) 0%, rgba(18, 24, 38, 0.6) 100%);
+  border-left: 4px solid #94A3B8;
+}
+
+.rank-3 {
+  background: linear-gradient(90deg, rgba(217, 119, 6, 0.14) 0%, rgba(18, 24, 38, 0.6) 100%);
+  border-left: 4px solid #D97706;
+}
+
+/* 3D Holographic Pass Ticket */
+.pass-ticket-3d {
+  background: linear-gradient(135deg, #0B111E 0%, #172338 50%, #0F172A 100%);
+  border: 2px solid #F59E0B;
+  border-radius: 16px;
+  position: relative;
+  box-shadow: 0 25px 60px -15px rgba(0,0,0,0.8), 0 0 30px rgba(245, 158, 11, 0.3);
+  transform-style: preserve-3d;
+}
+
+.pass-ticket-3d::before, .pass-ticket-3d::after {
+  content: '';
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  background: var(--ip-dark-950);
+  border-radius: 50%;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+}
+
+.pass-ticket-3d::before { left: -13px; border-right: 2px solid #F59E0B; }
+.pass-ticket-3d::after { right: -13px; border-left: 2px solid #F59E0B; }
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #printable-pass, #printable-pass * {
+    visibility: visible;
+  }
+  #printable-pass {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+}
