@@ -78,120 +78,33 @@ body {
   box-shadow: 0 0 30px rgba(245, 158, 11, 0.2), inset 0 0 15px rgba(245, 158, 11, 0.05);
 }
 
-/* ==================== 3D INTERACTIVE TILT CARDS ==================== */
+/* ==================== CLEAN FLAT CARDS (NO 3D DISTORTION) ==================== */
 .card-3d-wrap {
-  perspective: 1200px;
-  transform-style: preserve-3d;
+  perspective: none !important;
+  transform: none !important;
 }
 
 .card-3d {
   position: relative;
-  transition: transform 0.15s ease-out, box-shadow 0.25s ease, border-color 0.25s ease;
-  transform-style: preserve-3d;
-  will-change: transform;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transform: none !important;
 }
 
 .card-3d:hover {
-  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.8), 0 0 25px rgba(245, 158, 11, 0.25);
+  box-shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.6), 0 0 15px rgba(245, 158, 11, 0.15);
 }
 
-.card-3d-layer {
-  transform: translateZ(30px);
-  transform-style: preserve-3d;
-}
-
+.card-3d-layer,
 .card-3d-layer-deep {
-  transform: translateZ(50px);
+  transform: none !important;
 }
 
-/* Specular Glare Effect */
+/* Specular Glare Effect Disabled */
 .card-glare {
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.12), transparent 70%);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  mix-blend-mode: overlay;
-  z-index: 20;
+  display: none !important;
 }
 
-/* ==================== 3D GYROSCOPE ORBITAL RINGS ==================== */
-.gyro-container {
-  width: 320px;
-  height: 320px;
-  position: relative;
-  perspective: 1000px;
-  transform-style: preserve-3d;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
 
-@media (min-width: 640px) {
-  .gyro-container {
-    width: 380px;
-    height: 380px;
-  }
-}
-
-.gyro-ring {
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  pointer-events: none;
-  transform-style: preserve-3d;
-}
-
-.gyro-ring-1 {
-  border: 2px dashed rgba(245, 158, 11, 0.6);
-  box-shadow: 0 0 20px rgba(245, 158, 11, 0.3);
-  animation: gyroRotate1 12s linear infinite;
-}
-
-.gyro-ring-2 {
-  inset: 20px;
-  border: 1.5px solid rgba(6, 182, 212, 0.5);
-  border-top: 2.5px solid #06B6D4;
-  box-shadow: 0 0 20px rgba(6, 182, 212, 0.25);
-  animation: gyroRotate2 16s linear infinite reverse;
-}
-
-.gyro-ring-3 {
-  inset: 40px;
-  border: 1px dotted rgba(239, 68, 68, 0.6);
-  border-bottom: 2px solid #EF4444;
-  box-shadow: 0 0 15px rgba(239, 68, 68, 0.3);
-  animation: gyroRotate3 20s linear infinite;
-}
-
-@keyframes gyroRotate1 {
-  0% { transform: rotateX(65deg) rotateY(20deg) rotateZ(0deg); }
-  100% { transform: rotateX(65deg) rotateY(20deg) rotateZ(360deg); }
-}
-
-@keyframes gyroRotate2 {
-  0% { transform: rotateX(30deg) rotateY(70deg) rotateZ(0deg); }
-  100% { transform: rotateX(30deg) rotateY(70deg) rotateZ(360deg); }
-}
-
-@keyframes gyroRotate3 {
-  0% { transform: rotateX(75deg) rotateY(-40deg) rotateZ(0deg); }
-  100% { transform: rotateX(75deg) rotateY(-40deg) rotateZ(360deg); }
-}
-
-.gyro-core {
-  position: relative;
-  z-index: 10;
-  transform: translateZ(40px);
-  animation: float3D 4s ease-in-out infinite;
-}
-
-@keyframes float3D {
-  0%, 100% { transform: translateZ(40px) translateY(0px) rotateY(-5deg); }
-  50% { transform: translateZ(60px) translateY(-12px) rotateY(5deg); }
-}
 
 /* ==================== BORDER BEAM ANIMATION ==================== */
 .border-beam-card {
@@ -372,16 +285,9 @@ body {
     linear-gradient(to bottom, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
 }
 
-/* 3D Canvas Background Container */
+/* 3D Canvas Background Container Disabled */
 #three-canvas-container {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 1;
-  opacity: 0.65;
+  display: none !important;
 }
 
 /* Toast styling */
@@ -445,6 +351,7 @@ body {
 }
 
 /* 3D Holographic Pass Ticket */
+.pass-ticket,
 .pass-ticket-3d {
   background: linear-gradient(135deg, #0B111E 0%, #172338 50%, #0F172A 100%);
   border: 2px solid #F59E0B;
@@ -454,6 +361,7 @@ body {
   transform-style: preserve-3d;
 }
 
+.pass-ticket::before, .pass-ticket::after,
 .pass-ticket-3d::before, .pass-ticket-3d::after {
   content: '';
   position: absolute;
@@ -466,8 +374,8 @@ body {
   z-index: 10;
 }
 
-.pass-ticket-3d::before { left: -13px; border-right: 2px solid #F59E0B; }
-.pass-ticket-3d::after { right: -13px; border-left: 2px solid #F59E0B; }
+.pass-ticket::before, .pass-ticket-3d::before { left: -13px; border-right: 2px solid #F59E0B; }
+.pass-ticket::after, .pass-ticket-3d::after { right: -13px; border-left: 2px solid #F59E0B; }
 
 @media print {
   body * {

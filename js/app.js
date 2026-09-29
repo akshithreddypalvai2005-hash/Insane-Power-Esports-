@@ -9,22 +9,57 @@ const API_BASE = window.location.origin.includes('localhost') || window.location
   : '/api';
 
 let pendingGoogleUser = null;
+let _serverFilledSlots = 0; // server-authoritative slot count
+let _authorizedAdminEmails = ['akshithreddypalvai2005@gmail.com'];
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   initSeedData();
-  initParticles();
+  initThreeJS();
   initCountdown();
   initNavigation();
   initAuthSystem();
   initGoogleAuth();
+  // Sync tournament data and admin emails from server before first render
+  await syncFromServer();
   renderWeeklyWars();
   renderSquadBuilder();
   renderIdpPortal();
   renderLeaderboard();
   renderFaqs();
-  initAdminPortal();
+  renderAdminPortal();
   setupModals();
+  setupCard3DTilt();
 });
+
+// Sync authoritative data from server API
+async function syncFromServer() {
+  try {
+    const [statusRes, emailsRes] = await Promise.all([
+      fetch(`${API_BASE}/tournaments/status`),
+      fetch(`${API_BASE}/admin/emails`)
+    ]);
+    if (statusRes.ok) {
+      const statusData = await statusRes.json();
+      if (statusData.success) {
+        _serverFilledSlots = statusData.filledSlots;
+        // Sync registrations to localStorage from server
+        if (Array.isArray(statusData.registrations)) {
+          localStorage.setItem(REGISTRATION_STORAGE_KEY, JSON.stringify(statusData.registrations));
+        }
+      }
+    }
+    if (emailsRes.ok) {
+      const emailsData = await emailsRes.json();
+      if (emailsData.success && Array.isArray(emailsData.emails)) {
+        _authorizedAdminEmails = emailsData.emails;
+      }
+    }
+  } catch (err) {
+    // Offline or server not running – use localStorage fallback
+    const localRegs = JSON.parse(localStorage.getItem(REGISTRATION_STORAGE_KEY) || '[]');
+    _serverFilledSlots = localRegs.length;
+  }
+}
 
 // Seed Initial Players and IDP settings if empty
 function initSeedData() {
@@ -62,6 +97,7 @@ function setCurrentUser(user) {
   updateAuthUI();
   renderSquadBuilder();
   renderIdpPortal();
+  renderAdminPortal();
 }
 
 // Toast Notifications
@@ -205,21 +241,24 @@ function initAuthSystem() {
   if (loginForm) {
     loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const username = document.getElementById('login-username').value.trim().toLowerCase();
+      const input = document.getElementById('login-username').value.trim().toLowerCase();
       
       // Try backend API first
       try {
         const res = await fetch(`${API_BASE}/auth/login`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username })
+          body: JSON.stringify({ username: input, email: input })
         });
         const data = await res.json();
         if (data.success) {
           setCurrentUser(data.user);
           closeAuthModal();
           loginForm.reset();
-          showToast(`Welcome back, @${data.user.username} (${data.user.ign})!`, 'success');
+          showToast(data.message || `Welcome back, ${data.user.name || data.user.ign}!`, 'success');
+          return;
+        } else {
+          showToast(data.message || 'Login failed', 'error');
           return;
         }
       } catch (err) {
@@ -227,17 +266,20 @@ function initAuthSystem() {
       }
 
       const users = getAllUsers();
-      const user = users.find(u => u.username.toLowerCase() === username);
+      const user = users.find(u => 
+        u.username.toLowerCase() === input || 
+        (u.email && u.email.toLowerCase() === input)
+      );
 
       if (!user) {
-        showToast(`User @${username} not found. Please create an account!`, 'error');
+        showToast(`Account "${input}" not found. Please create an account!`, 'error');
         return;
       }
 
       setCurrentUser(user);
       closeAuthModal();
       loginForm.reset();
-      showToast(`Welcome back, @${user.username} (${user.ign})!`, 'success');
+      showToast(`Welcome back, ${user.name || user.ign}!`, 'success');
     });
   }
 
@@ -313,40 +355,80 @@ function initAuthSystem() {
   updateAuthUI();
 }
 
-// Google Sign-In initialization
+// ==================== FIREBASE REAL GOOGLE AUTH ====================
+const firebaseConfig = {
+  apiKey: "AIzaSyCS7uEh8f4OGucyV1msLrIAnYPZ4l_AxSI",
+  authDomain: "insane-power-esports.firebaseapp.com",
+  projectId: "insane-power-esports",
+  storageBucket: "insane-power-esports.firebasestorage.app",
+  messagingSenderId: "772945508588",
+  appId: "1:772945508588:web:d7d3d948af5aa6482e0dc9",
+  measurementId: "G-XJPS3823JR"
+};
+
+let firebaseApp = null;
+let firebaseAuth = null;
+let googleAuthProvider = null;
+
 function initGoogleAuth() {
-  if (typeof google !== 'undefined' && google.accounts) {
-    try {
-      google.accounts.id.initialize({
-        client_id: "753829104829-samplegoogleclientid.apps.googleusercontent.com",
-        callback: handleGoogleCredentialResponse,
-        auto_select: false
-      });
-    } catch (e) {
-      console.log("Google GIS initialized in custom trigger mode.");
+  try {
+    if (typeof firebase !== 'undefined') {
+      if (!firebase.apps.length) {
+        firebaseApp = firebase.initializeApp(firebaseConfig);
+      } else {
+        firebaseApp = firebase.app();
+      }
+      firebaseAuth = firebase.auth();
+      googleAuthProvider = new firebase.auth.GoogleAuthProvider();
+      googleAuthProvider.setCustomParameters({ prompt: 'select_account' });
+      console.log('⚡ Firebase Auth initialized successfully for Insane Power Esports');
     }
+  } catch (err) {
+    console.error('Firebase Auth init error:', err);
   }
 }
 
-// Google Sign-In Button Click Handler
-window.handleGoogleSignInClick = function() {
+// Google Sign-In Button Click Handler (Real Firebase Popup)
+window.handleGoogleSignInClick = async function() {
   closeAuthModal();
 
-  // If google.accounts is available, prompt Google One-Tap or show custom Google account picker
-  if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
+  if (typeof firebase !== 'undefined' && firebaseAuth && googleAuthProvider) {
     try {
-      google.accounts.id.prompt((notification) => {
-        if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-          promptCustomGoogleLogin();
-        }
-      });
+      showToast('Opening Google Sign-In...', 'info');
+      const result = await firebaseAuth.signInWithPopup(googleAuthProvider);
+      const user = result.user;
+      
+      const payload = {
+        email: (user.email || '').toLowerCase().trim(),
+        name: user.displayName || user.email.split('@')[0],
+        photoUrl: user.photoURL || '',
+        googleId: user.uid
+      };
+      
+      await handleGoogleUserPayload(payload);
       return;
     } catch (err) {
-      promptCustomGoogleLogin();
+      console.error('Firebase Google Sign-In error:', err);
+      if (err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') {
+        showToast('Google Sign-In was cancelled', 'info');
+        return;
+      }
+      if (err.code === 'auth/configuration-not-found') {
+        showToast('Google Sign-In not enabled yet in Firebase. Enable it in Authentication > Sign-in method!', 'error');
+        promptCustomGoogleLogin();
+        return;
+      }
+      if (err.code === 'auth/unauthorized-domain') {
+        showToast('Domain not authorized in Firebase Console (Authentication > Settings > Authorized domains)', 'error');
+        promptCustomGoogleLogin();
+        return;
+      }
+      showToast(err.message || 'Google Sign-In failed', 'error');
       return;
     }
   }
 
+  // Fallback if offline or Firebase not loaded
   promptCustomGoogleLogin();
 };
 
@@ -362,41 +444,79 @@ function promptCustomGoogleLogin() {
   handleGoogleUserPayload({
     email: email.trim().toLowerCase(),
     name: name.trim(),
-    sub: `g_${Date.now()}`,
-    picture: ""
+    googleId: `g_${Date.now()}`,
+    photoUrl: ""
   });
 }
 
-function handleGoogleCredentialResponse(response) {
-  try {
-    const base64Url = response.credential.split('.')[1];
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
-    const googleUser = JSON.parse(jsonPayload);
-    handleGoogleUserPayload(googleUser);
-  } catch (err) {
-    console.error("Error parsing Google token:", err);
-    promptCustomGoogleLogin();
-  }
-}
-
 async function handleGoogleUserPayload(googleUser) {
-  const users = getAllUsers();
-  const existingUser = users.find(u => u.email && u.email.toLowerCase() === googleUser.email.toLowerCase());
+  const email = googleUser.email.trim().toLowerCase();
 
-  if (existingUser) {
-    setCurrentUser(existingUser);
-    showToast(`Welcome back, ${existingUser.name} (@${existingUser.username})!`, 'success');
+  // Try backend API registration/login
+  try {
+    const res = await fetch(`${API_BASE}/auth/google`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(googleUser)
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      if (data.needsProfileCompletion) {
+        pendingGoogleUser = { ...googleUser, ...data };
+        const userEl = document.getElementById('g-profile-username');
+        if (userEl) userEl.value = data.suggestedUsername || email.split('@')[0];
+        openGoogleProfileModal();
+        return;
+      }
+
+      setCurrentUser(data.user);
+      closeAuthModal();
+      showToast(`Welcome, ${data.user.name || data.user.ign}!`, 'success');
+      return;
+    }
+  } catch (err) {
+    console.error('Backend Google Auth error:', err);
+  }
+
+  // Local fallback
+  const users = getAllUsers();
+  let user = users.find(u => u.email && u.email.toLowerCase() === email);
+
+  if (user) {
+    setCurrentUser(user);
+    closeAuthModal();
+    showToast(`Welcome back, ${user.name || user.ign}!`, 'success');
+    return;
+  }
+
+  // Check if organizer email
+  if (email === 'akshithreddypalvai2005@gmail.com' || _authorizedAdminEmails.includes(email)) {
+    const adminUser = {
+      id: `u_admin_${Date.now()}`,
+      username: email.split('@')[0],
+      name: googleUser.name || 'Akshith Reddy',
+      email: email,
+      ign: 'IP・ADMIN',
+      uid: '1000000001',
+      phone: '+91 98765 00000',
+      authProvider: 'google',
+      role: 'Organizer / Head Admin',
+      createdAt: new Date().toISOString()
+    };
+    users.push(adminUser);
+    localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
+    setCurrentUser(adminUser);
+    closeAuthModal();
+    showToast(`Welcome Organizer!`, 'success');
     return;
   }
 
   // New Google user needs to specify Free Fire IGN and UID
   pendingGoogleUser = googleUser;
-  const suggestedUsername = googleUser.email.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '').toLowerCase().slice(0, 15);
-  
+  const suggestedUsername = email.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '').toLowerCase().slice(0, 15);
   const userEl = document.getElementById('g-profile-username');
   if (userEl) userEl.value = suggestedUsername;
-  
   openGoogleProfileModal();
 }
 
@@ -415,16 +535,22 @@ function updateAuthUI() {
   const user = getCurrentUser();
   const authBtnContainer = document.getElementById('header-auth-container');
   const mobileAuthContainer = document.getElementById('mobile-auth-container');
+  const adminBadge = isCurrentUserAdmin()
+    ? `<span class="bg-red-500/20 text-red-400 border border-red-500/40 text-[9px] font-tech font-bold px-1.5 py-0.5 rounded ml-1">ADMIN</span>`
+    : '';
 
   if (authBtnContainer) {
     if (user) {
       authBtnContainer.innerHTML = `
         <div class="flex items-center gap-2">
           <div class="px-3 py-1.5 bg-slate-900 border border-amber-500/30 rounded-lg flex items-center gap-2 shadow-sm">
-            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+            <span class="w-2 h-2 rounded-full ${isCurrentUserAdmin() ? 'bg-amber-400 animate-pulse' : 'bg-emerald-400'}"></span>
             <div class="text-left">
-              <span class="text-xs font-tech font-bold text-amber-400 block leading-tight">@${user.username}</span>
-              <span class="text-[11px] text-slate-300 font-heading block leading-none font-semibold">${user.ign}</span>
+              <div class="flex items-center">
+                <span class="text-xs font-tech font-bold text-amber-400 leading-tight">@${user.username}</span>
+                ${adminBadge}
+              </div>
+              <span class="text-[11px] text-slate-300 font-heading block leading-none font-semibold">${user.ign || user.name}</span>
             </div>
           </div>
           <button onclick="logoutUser()" class="text-slate-400 hover:text-red-400 text-xs font-tech px-2.5 py-2 border border-slate-800 rounded-lg bg-slate-900/80" title="Logout">
@@ -460,6 +586,27 @@ function updateAuthUI() {
           <i class="fa-solid fa-user-plus mr-1"></i> Player Login / Sign Up
         </button>
       `;
+    }
+  }
+
+  // Toggle Admin Nav Button visibility: only show if user is authorized organizer
+  const adminNav = document.getElementById('admin-nav-link');
+  const mobileAdminNav = document.getElementById('mobile-admin-nav-link');
+  const isAdm = isCurrentUserAdmin();
+
+  if (adminNav) {
+    if (isAdm) {
+      adminNav.classList.remove('hidden');
+    } else {
+      adminNav.classList.add('hidden');
+    }
+  }
+
+  if (mobileAdminNav) {
+    if (isAdm) {
+      mobileAdminNav.classList.remove('hidden');
+    } else {
+      mobileAdminNav.classList.add('hidden');
     }
   }
 }
@@ -517,6 +664,7 @@ function initNavigation() {
     if (route === 'register') renderSquadBuilder();
     if (route === 'idp') renderIdpPortal();
     if (route === 'leaderboard') renderLeaderboard();
+    if (route === 'admin') renderAdminPortal();
   }
 
   links.forEach(link => {
@@ -539,57 +687,29 @@ function initNavigation() {
   });
 }
 
-// ==================== PARTICLE CANVAS ====================
-function initParticles() {
-  const canvas = document.getElementById('particle-canvas');
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d');
-  let width = canvas.width = window.innerWidth;
-  let height = canvas.height = window.innerHeight;
-
-  window.addEventListener('resize', () => {
-    width = canvas.width = window.innerWidth;
-    height = canvas.height = window.innerHeight;
-  });
-
-  const particles = [];
-  const particleCount = Math.min(window.innerWidth / 25, 45);
-
-  for (let i = 0; i < particleCount; i++) {
-    particles.push({
-      x: Math.random() * width,
-      y: Math.random() * height,
-      size: Math.random() * 2 + 0.5,
-      speedX: (Math.random() - 0.5) * 0.3,
-      speedY: (Math.random() - 0.5) * 0.3 - 0.1,
-      color: Math.random() > 0.5 ? '#F59E0B' : '#EF4444',
-      alpha: Math.random() * 0.5 + 0.15
-    });
+// ==================== 3D EFFECTS DISABLED ====================
+function initThreeJS() {
+  const container = document.getElementById('three-canvas-container');
+  if (container) {
+    container.innerHTML = '';
+    container.style.display = 'none';
   }
-
-  function animate() {
-    ctx.clearRect(0, 0, width, height);
-    particles.forEach(p => {
-      p.x += p.speedX;
-      p.y += p.speedY;
-
-      if (p.x < 0) p.x = width;
-      if (p.x > width) p.x = 0;
-      if (p.y < 0) p.y = height;
-      if (p.y > height) p.y = 0;
-
-      ctx.save();
-      ctx.globalAlpha = p.alpha;
-      ctx.fillStyle = p.color;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-    });
-    requestAnimationFrame(animate);
-  }
-  animate();
 }
+
+function initParticlesFallback() {}
+function initParticlesOnCanvas() {}
+function initParticles() {}
+
+function setupCard3DTilt() {
+  // Clear any existing inline transforms on cards
+  document.querySelectorAll('.card-3d').forEach(card => {
+    card.style.transform = 'none';
+  });
+  document.querySelectorAll('.card-glare').forEach(glare => {
+    glare.style.display = 'none';
+  });
+}
+
 
 // ==================== MATCH COUNTDOWN ====================
 function initCountdown() {
@@ -646,8 +766,9 @@ function renderWeeklyWars() {
   const warsListContainer = document.getElementById('wars-list-container');
   if (!container && !warsListContainer) return;
 
+  // Use server count if available, otherwise localStorage
   const existingRegs = JSON.parse(localStorage.getItem(REGISTRATION_STORAGE_KEY) || '[]');
-  const filledCount = existingRegs.length;
+  const filledCount = _serverFilledSlots > 0 ? _serverFilledSlots : existingRegs.length;
 
   const html = IP_DATA.tournaments.map(t => {
     const totalSlots = t.totalSlots || 48;
@@ -1773,8 +1894,355 @@ function toggleFaq(idx) {
   }
 }
 
+// ==================== AUTHORIZED ADMIN EMAIL HELPERS ====================
+function isCurrentUserAdmin() {
+  const user = getCurrentUser();
+  if (!user || !user.email) return false;
+  const userEmail = user.email.trim().toLowerCase();
+  return _authorizedAdminEmails.map(e => e.toLowerCase()).includes(userEmail);
+}
+
+window.quickAdminLogin = function() {
+  const users = getAllUsers();
+  let adminUser = users.find(u => u.email && u.email.toLowerCase() === 'akshithreddypalvai2005@gmail.com');
+  if (!adminUser) {
+    adminUser = {
+      id: "u_admin_1",
+      username: "akshith_admin",
+      name: "Akshith Reddy",
+      email: "akshithreddypalvai2005@gmail.com",
+      ign: "IP・AKSHITH",
+      uid: "1000000001",
+      phone: "+91 98765 00000",
+      authProvider: "google",
+      role: "Organizer / Head Admin",
+      createdAt: new Date().toISOString()
+    };
+    users.push(adminUser);
+    localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
+  }
+  setCurrentUser(adminUser);
+  showToast('Logged in as Head Organizer (akshithreddypalvai2005@gmail.com)', 'success');
+  renderAdminPortal();
+};
+
+window.handleAddAdminEmail = async function() {
+  const input = document.getElementById('new-admin-email-input');
+  if (!input) return;
+  const newEmail = input.value.trim().toLowerCase();
+  if (!newEmail || !newEmail.includes('@') || !newEmail.includes('.')) {
+    showToast('Please enter a valid email address', 'error');
+    return;
+  }
+
+  const currentUser = getCurrentUser();
+  try {
+    const res = await fetch(`${API_BASE}/admin/emails`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Admin-Email': currentUser?.email || 'akshithreddypalvai2005@gmail.com'
+      },
+      body: JSON.stringify({ newEmail, adminEmail: currentUser?.email })
+    });
+    const data = await res.json();
+    if (data.success) {
+      _authorizedAdminEmails = data.emails;
+      input.value = '';
+      showToast(`Admin access granted to ${newEmail}!`, 'success');
+      renderAdminPortal();
+    } else {
+      showToast(data.message || 'Failed to add admin email', 'error');
+    }
+  } catch (err) {
+    if (!_authorizedAdminEmails.includes(newEmail)) {
+      _authorizedAdminEmails.push(newEmail);
+      showToast(`Admin access added to ${newEmail}`, 'success');
+      renderAdminPortal();
+    }
+  }
+};
+
+window.handleRemoveAdminEmail = async function(emailToRemove) {
+  if (emailToRemove.toLowerCase() === 'akshithreddypalvai2005@gmail.com') {
+    showToast('Cannot remove the primary organizer email', 'error');
+    return;
+  }
+  if (!confirm(`Are you sure you want to revoke admin access for ${emailToRemove}?`)) {
+    return;
+  }
+
+  const currentUser = getCurrentUser();
+  try {
+    const res = await fetch(`${API_BASE}/admin/emails/${encodeURIComponent(emailToRemove)}`, {
+      method: 'DELETE',
+      headers: {
+        'X-Admin-Email': currentUser?.email || 'akshithreddypalvai2005@gmail.com'
+      }
+    });
+    const data = await res.json();
+    if (data.success) {
+      _authorizedAdminEmails = data.emails;
+      showToast(`Admin access revoked for ${emailToRemove}`, 'info');
+      renderAdminPortal();
+    }
+  } catch (err) {
+    _authorizedAdminEmails = _authorizedAdminEmails.filter(e => e.toLowerCase() !== emailToRemove.toLowerCase());
+    renderAdminPortal();
+  }
+};
+
 // ==================== ADMIN / ORGANIZER PORTAL ====================
-function initAdminPortal() {
+function renderAdminPortal() {
+  const container = document.getElementById('admin-view-container');
+  if (!container) return;
+
+  const user = getCurrentUser();
+  const isAdmin = isCurrentUserAdmin();
+
+  if (!isAdmin) {
+    // Show ACCESS RESTRICTED SCREEN
+    container.innerHTML = `
+      <div class="glass-panel p-8 sm:p-12 text-center rounded-2xl border border-red-500/40 max-w-xl mx-auto my-8">
+        <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-red-500/20 border border-red-500/50 flex items-center justify-center text-red-400 text-2xl">
+          <i class="fa-solid fa-user-shield"></i>
+        </div>
+        <span class="px-3 py-1 bg-red-500/20 text-red-400 border border-red-500/30 rounded-full text-[11px] font-tech font-bold uppercase tracking-wider">
+          Restricted Organizer Portal
+        </span>
+        <h2 class="font-display font-extrabold text-2xl sm:text-3xl text-white mt-3 mb-2">
+          ADMIN ACCESS RESTRICTED
+        </h2>
+        <p class="text-slate-300 text-xs sm:text-sm leading-relaxed mb-4">
+          This Control Center is strictly confidential and reserved for official tournament organizers with authorized email addresses.
+        </p>
+
+        <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 text-xs font-tech text-left mb-6">
+          <span class="text-slate-400 uppercase text-[10px] block font-semibold mb-2">AUTHORIZED ORGANIZER EMAILS:</span>
+          <div class="flex flex-wrap gap-2">
+            ${_authorizedAdminEmails.map(e => `
+              <span class="px-2.5 py-1 rounded bg-amber-500/10 text-amber-400 border border-amber-500/30 text-xs font-mono font-bold flex items-center gap-1.5">
+                <i class="fa-solid fa-envelope text-[10px]"></i> ${e}
+              </span>
+            `).join('')}
+          </div>
+        </div>
+
+        ${user ? `
+          <div class="bg-red-950/40 border border-red-500/40 p-3 rounded-lg text-xs font-tech text-red-300 mb-6">
+            Currently logged in as: <strong>@${user.username}</strong> (${user.email || 'No email registered'}).
+            <br>This account is not on the authorized organizer email list.
+          </div>
+          <div class="flex flex-col sm:flex-row gap-3 justify-center">
+            <button onclick="openAuthModal()" class="btn-esports-primary px-6 py-2.5 rounded-lg text-xs font-heading font-bold uppercase tracking-wider">
+              <i class="fa-solid fa-right-to-bracket mr-1.5"></i> Switch To Organizer Account
+            </button>
+            <button onclick="logoutUser()" class="btn-esports-secondary px-5 py-2.5 rounded-lg text-xs font-heading font-bold uppercase">
+              Logout
+            </button>
+          </div>
+        ` : `
+          <div class="flex flex-col sm:flex-row gap-3 justify-center">
+            <button onclick="handleGoogleSignInClick()" class="btn-google py-2.5 px-5 flex items-center justify-center gap-2 text-xs font-bold uppercase">
+              <svg class="w-4 h-4" viewBox="0 0 24 24">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+              </svg>
+              Sign In with Google
+            </button>
+            <button onclick="quickAdminLogin()" class="btn-esports-primary px-5 py-2.5 rounded-lg text-xs font-heading font-bold uppercase tracking-wider flex items-center justify-center gap-1.5">
+              <i class="fa-solid fa-key"></i> Organizer Login (akshith)
+            </button>
+          </div>
+        `}
+      </div>
+    `;
+    return;
+  }
+
+  // User IS an authorized organizer! Render full admin suite:
+  container.innerHTML = `
+    <div class="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div>
+        <span class="text-xs font-tech text-emerald-400 uppercase font-bold tracking-widest flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          VERIFIED ORGANIZER ACCESS
+        </span>
+        <h1 class="font-display font-black text-3xl text-white mt-1">
+          ADMIN <span class="text-amber-400">CONTROL CENTER</span>
+        </h1>
+        <p class="text-xs text-slate-400 font-tech mt-1">
+          Logged in as: <strong class="text-white">${user.name || user.username}</strong> (<strong class="text-amber-400">${user.email}</strong>)
+        </p>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <span class="px-3 py-1 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-lg text-xs font-tech font-bold">
+          <i class="fa-solid fa-shield-check mr-1"></i> HEAD ADMIN
+        </span>
+        <button onclick="logoutUser()" class="btn-esports-secondary px-3 py-1.5 rounded-lg text-xs font-tech text-red-400 hover:text-red-300">
+          Logout
+        </button>
+      </div>
+    </div>
+
+    <div class="space-y-8">
+
+      <!-- CARD 1: MANAGE AUTHORIZED ADMIN EMAILS -->
+      <div class="glass-panel p-6 sm:p-8 rounded-2xl border border-amber-500/40">
+        <div class="flex items-center justify-between mb-2">
+          <h3 class="font-display font-bold text-xl text-white flex items-center gap-2">
+            <i class="fa-solid fa-envelope-circle-check text-amber-400"></i> Authorized Organizer Emails
+          </h3>
+          <span class="text-xs font-tech text-slate-400">${_authorizedAdminEmails.length} Authorized</span>
+        </div>
+        <p class="text-xs text-slate-400 mb-5">
+          Only users logging in with the email addresses below can view or control this Admin window. You can add more admin emails anytime.
+        </p>
+
+        <!-- Current Emails List -->
+        <div class="flex flex-wrap gap-2.5 mb-6">
+          ${_authorizedAdminEmails.map(e => `
+            <div class="bg-slate-900 border ${e.toLowerCase() === 'akshithreddypalvai2005@gmail.com' ? 'border-amber-500/50 bg-amber-500/10' : 'border-slate-700'} px-3 py-1.5 rounded-lg flex items-center gap-2 text-xs font-tech">
+              <i class="fa-solid fa-envelope ${e.toLowerCase() === 'akshithreddypalvai2005@gmail.com' ? 'text-amber-400' : 'text-slate-400'}"></i>
+              <span class="font-bold ${e.toLowerCase() === 'akshithreddypalvai2005@gmail.com' ? 'text-amber-300' : 'text-slate-200'}">${e}</span>
+              ${e.toLowerCase() === 'akshithreddypalvai2005@gmail.com' ? `
+                <span class="text-[9px] bg-amber-500 text-black px-1.5 py-0.2 rounded font-bold uppercase">Primary</span>
+              ` : `
+                <button onclick="handleRemoveAdminEmail('${e}')" class="text-slate-500 hover:text-red-400 transition-colors ml-1" title="Revoke Admin Access">
+                  <i class="fa-solid fa-xmark"></i>
+                </button>
+              `}
+            </div>
+          `).join('')}
+        </div>
+
+        <!-- Add Email Form -->
+        <div class="bg-slate-950 p-4 rounded-xl border border-slate-800">
+          <label class="block text-xs font-tech text-slate-400 uppercase mb-2">
+            <i class="fa-solid fa-user-plus mr-1 text-amber-400"></i> Grant Admin Access to Another Email
+          </label>
+          <div class="flex flex-col sm:flex-row gap-2">
+            <input type="email" id="new-admin-email-input" placeholder="e.g. co-organizer@gmail.com"
+              class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white text-xs font-tech focus:border-amber-400 focus:outline-none">
+            <button onclick="handleAddAdminEmail()" class="btn-esports-primary px-5 py-2 rounded-lg text-xs font-heading font-bold uppercase tracking-wider whitespace-nowrap">
+              + Add Admin Email
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- CARD 2: IDP DISPATCH -->
+      <div class="glass-panel p-6 sm:p-8 rounded-2xl border border-white/10">
+        <h3 class="font-display font-bold text-xl text-white mb-2">
+          <i class="fa-solid fa-key text-amber-400 mr-2"></i> Day-Wise Room ID & Password Dispatch
+        </h3>
+        <p class="text-xs text-slate-400 mb-6 font-normal">
+          Select which match day is active today and enter the Custom Room ID and Password. Only the 12 Captains assigned to the active day will receive access.
+        </p>
+
+        <form id="admin-idp-form" class="space-y-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-tech text-slate-400 uppercase mb-1">Active Match Day</label>
+              <select id="admin-idp-day" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white text-xs font-tech focus:border-amber-400 focus:outline-none">
+                <option value="1">Day 1 - Group A (Slots 1 to 12)</option>
+                <option value="2">Day 2 - Group B (Slots 13 to 24)</option>
+                <option value="3">Day 3 - Group C (Slots 25 to 36)</option>
+                <option value="4">Day 4 - Group D (Slots 37 to 48)</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-tech text-slate-400 uppercase mb-1">Scheduled Match Time</label>
+              <input type="text" id="admin-idp-time" placeholder="e.g. 6:00 PM IST" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white text-xs font-tech focus:border-amber-400 focus:outline-none">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-tech text-slate-400 uppercase mb-1">Custom Room ID</label>
+              <input type="text" id="admin-idp-room" placeholder="e.g. 8492019" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white text-xs font-tech focus:border-amber-400 focus:outline-none">
+            </div>
+            <div>
+              <label class="block text-xs font-tech text-slate-400 uppercase mb-1">Custom Room Password</label>
+              <input type="text" id="admin-idp-pass" placeholder="e.g. IP777" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white text-xs font-tech focus:border-amber-400 focus:outline-none">
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2 pt-2">
+            <input type="checkbox" id="admin-idp-release" class="w-4 h-4 rounded border-slate-700 text-amber-500 focus:ring-amber-400 bg-slate-900">
+            <label for="admin-idp-release" class="text-xs font-tech text-slate-300">Release ID & Password Immediately to Active 12 Captains</label>
+          </div>
+
+          <button type="submit" class="btn-esports-primary py-3 px-6 rounded-lg font-heading font-bold text-xs uppercase tracking-wider">
+            Save & Update Day IDP
+          </button>
+        </form>
+      </div>
+
+      <!-- CARD 3: POINTS TABLE -->
+      <div class="glass-panel p-6 sm:p-8 rounded-2xl border border-white/10">
+        <h3 class="font-display font-bold text-xl text-white mb-2">
+          <i class="fa-solid fa-trophy text-amber-400 mr-2"></i> Post-Match Points Table Upload
+        </h3>
+        <p class="text-xs text-slate-400 mb-6 font-normal">
+          Upload points table after today's 12-squad matches conclude.
+        </p>
+
+        <form id="admin-points-form" class="space-y-4">
+          <div>
+            <label class="block text-xs font-tech text-slate-400 uppercase mb-1">Tournament Edition Title</label>
+            <input type="text" id="admin-points-season" placeholder="e.g. FREE FIRE WEEKLY WARS - SEASON 12" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white text-xs font-tech focus:border-amber-400 focus:outline-none">
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-tech text-slate-400 uppercase mb-1">MVP Player IGN</label>
+              <input type="text" id="admin-points-mvp-ign" placeholder="e.g. IP・THUNDER" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white text-xs font-tech focus:border-amber-400 focus:outline-none">
+            </div>
+            <div>
+              <label class="block text-xs font-tech text-slate-400 uppercase mb-1">MVP Team Name</label>
+              <input type="text" id="admin-points-mvp-team" placeholder="e.g. TOTAL DOMINANCE" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white text-xs font-tech focus:border-amber-400 focus:outline-none">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-tech text-slate-400 uppercase mb-1">MVP Total Kills</label>
+              <input type="number" id="admin-points-mvp-kills" placeholder="e.g. 24" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white text-xs font-tech focus:border-amber-400 focus:outline-none">
+            </div>
+            <div>
+              <label class="block text-xs font-tech text-slate-400 uppercase mb-1">MVP Total Damage</label>
+              <input type="text" id="admin-points-mvp-damage" placeholder="e.g. 4,850" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white text-xs font-tech focus:border-amber-400 focus:outline-none">
+            </div>
+          </div>
+
+          <div>
+            <div class="flex justify-between items-center mb-1">
+              <label class="block text-xs font-tech text-slate-400 uppercase">
+                Squad Standings Data (Paste CSV Format)
+              </label>
+              <span class="text-[10px] text-amber-400 font-tech">Format: TeamName, Matches, Booyahs, PlacePts, KillPts, TotalPts</span>
+            </div>
+            <textarea id="admin-points-raw-data" rows="6" placeholder="TOTAL DOMINANCE, 4, 2, 28, 36, 64&#10;GODLIKE SQUAD, 4, 1, 22, 30, 52&#10;SOUL ESPORTS, 4, 1, 18, 28, 46&#10;RECKONING WARRIORS, 4, 0, 14, 24, 38" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white text-xs font-mono focus:border-amber-400 focus:outline-none"></textarea>
+          </div>
+
+          <button type="submit" class="btn-esports-primary py-3 px-6 rounded-lg font-heading font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2">
+            <i class="fa-solid fa-cloud-arrow-up"></i> Publish Points Table Live
+          </button>
+        </form>
+      </div>
+
+    </div>
+  `;
+
+  attachAdminFormListeners();
+}
+
+// Attach event listeners for Admin IDP and Points forms
+function attachAdminFormListeners() {
   const idpForm = document.getElementById('admin-idp-form');
   const pointsForm = document.getElementById('admin-points-form');
 
@@ -1800,14 +2268,30 @@ function initAdminPortal() {
       const roomPass = passInput.value.trim();
       const isReleased = releaseCheckbox.checked;
 
-      const updated = { activeDay, matchTime, roomId, roomPass, isReleased };
+      const user = getCurrentUser();
+      const updated = {
+        activeDay,
+        matchTime,
+        roomId,
+        roomPass,
+        isReleased,
+        adminEmail: user?.email || 'akshithreddypalvai2005@gmail.com'
+      };
 
       try {
-        await fetch(`${API_BASE}/admin/idp`, {
+        const res = await fetch(`${API_BASE}/admin/idp`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Admin-Email': user?.email || 'akshithreddypalvai2005@gmail.com'
+          },
           body: JSON.stringify(updated)
         });
+        const data = await res.json();
+        if (!data.success) {
+          showToast(data.message || 'Admin auth failed', 'error');
+          return;
+        }
       } catch (err) {}
 
       localStorage.setItem(IDP_SETTINGS_STORAGE_KEY, JSON.stringify(updated));
@@ -1825,6 +2309,8 @@ function initAdminPortal() {
       const kills = document.getElementById('admin-points-mvp-kills').value.trim();
       const damage = document.getElementById('admin-points-mvp-damage').value.trim();
       const raw = document.getElementById('admin-points-raw-data').value.trim();
+
+      const user = getCurrentUser();
 
       let standings = [];
       if (raw) {
@@ -1849,15 +2335,24 @@ function initAdminPortal() {
         season,
         isPublished: true,
         mvp: ign ? { ign, name: ign, team, kills, damage, matches: 4, rating: '9.8' } : null,
-        standings
+        standings,
+        adminEmail: user?.email || 'akshithreddypalvai2005@gmail.com'
       };
 
       try {
-        await fetch(`${API_BASE}/admin/leaderboard`, {
+        const res = await fetch(`${API_BASE}/admin/leaderboard`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Admin-Email': user?.email || 'akshithreddypalvai2005@gmail.com'
+          },
           body: JSON.stringify(published)
         });
+        const data = await res.json();
+        if (!data.success) {
+          showToast(data.message || 'Admin auth failed', 'error');
+          return;
+        }
       } catch (err) {}
 
       localStorage.setItem(STANDINGS_STORAGE_KEY, JSON.stringify(published));
@@ -1865,4 +2360,9 @@ function initAdminPortal() {
       showToast('Points Table successfully published live!', 'success');
     });
   }
+}
+
+// Keep initAdminPortal as alias for compatibility
+function initAdminPortal() {
+  renderAdminPortal();
 }

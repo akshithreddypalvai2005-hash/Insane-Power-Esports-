@@ -1,5 +1,22 @@
 {
+  "adminEmails": [
+    "akshithreddypalvai2005@gmail.com",
+    "siddharthatumrugoti@gmail.com"
+  ],
   "users": [
+    {
+      "id": "u_admin_1",
+      "username": "akshith_admin",
+      "name": "Akshith Reddy",
+      "email": "akshithreddypalvai2005@gmail.com",
+      "ign": "IP・AKSHITH",
+      "uid": "1000000001",
+      "phone": "+91 98765 00000",
+      "authProvider": "google",
+      "role": "Organizer / Head Admin",
+      "createdAt": "2026-09-01T00:00:00.000Z",
+      "photoUrl": "https://lh3.googleusercontent.com/a/ACg8ocKgnv_2edLBJyflhEguYtn7YesvRsWf13snDjZ3RPi1Iwe-EWt9=s96-c"
+    },
     {
       "id": "u_1",
       "username": "thunder_igl",
@@ -10,7 +27,7 @@
       "phone": "+91 98765 43210",
       "authProvider": "local",
       "role": "Captain / IGL",
-      "createdAt": "2026-09-27T06:17:26.603Z"
+      "createdAt": "2026-09-01T00:00:00.000Z"
     },
     {
       "id": "u_2",
@@ -22,7 +39,7 @@
       "phone": "+91 98765 43211",
       "authProvider": "local",
       "role": "Sniper",
-      "createdAt": "2026-09-27T06:17:26.604Z"
+      "createdAt": "2026-09-02T00:00:00.000Z"
     },
     {
       "id": "u_3",
@@ -34,7 +51,7 @@
       "phone": "+91 98765 43212",
       "authProvider": "local",
       "role": "Entry Rusher",
-      "createdAt": "2026-09-27T06:17:26.604Z"
+      "createdAt": "2026-09-03T00:00:00.000Z"
     },
     {
       "id": "u_4",
@@ -46,7 +63,7 @@
       "phone": "+91 98765 43213",
       "authProvider": "local",
       "role": "Support",
-      "createdAt": "2026-09-27T06:17:26.604Z"
+      "createdAt": "2026-09-04T00:00:00.000Z"
     },
     {
       "id": "u_5",
@@ -58,18 +75,31 @@
       "phone": "+91 98765 43214",
       "authProvider": "local",
       "role": "Substitute",
-      "createdAt": "2026-09-27T06:17:26.604Z"
+      "createdAt": "2026-09-05T00:00:00.000Z"
+    },
+    {
+      "id": "u_g_1790694457812",
+      "username": "palvaiakshithre",
+      "name": "akshith reddy Palvai",
+      "email": "palvaiakshithreddy@gmail.com",
+      "photoUrl": "",
+      "ign": "kkk",
+      "uid": "67890",
+      "phone": "8919083969",
+      "authProvider": "google",
+      "role": "Player",
+      "createdAt": "2026-09-29T15:07:37.812Z"
     }
   ],
   "squads": [],
   "registrations": [],
   "idpSettings": {
     "activeDay": 1,
-    "activeGroupName": "Day 1 - Group A (Slots 1 - 12)",
-    "isReleased": true,
+    "activeGroupName": "Day 1 - Group A",
     "roomId": "8492019",
     "roomPass": "IP777",
-    "matchTime": "6:00 PM IST"
+    "matchTime": "6:00 PM IST",
+    "isReleased": true
   },
   "leaderboard": {
     "season": "FREE FIRE WEEKLY WARS - SEASON 12 FINALS",
