@@ -9,7 +9,10 @@ const API_BASE = window.location.origin.includes('localhost') || window.location
   : '/api';
 
 let pendingGoogleUser = null;
-let _serverFilledSlots = 0; // server-authoritative slot count
+let _serverFilledSlots = null; // null means the server has not supplied a count yet
+let _publicSquads = null;
+let _publicMatchState = null;
+let _arenaConnection = 'loading';
 let _authorizedAdminEmails = ['akshithreddypalvai2005@gmail.com'];
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -19,33 +22,49 @@ document.addEventListener('DOMContentLoaded', async () => {
   initNavigation();
   initAuthSystem();
   initGoogleAuth();
+  setupModals();
   // Sync tournament data and admin emails from server before first render
   await syncFromServer();
+  await syncCurrentSquad();
+  updateAuthUI();
   renderWeeklyWars();
   renderSquadBuilder();
   renderIdpPortal();
   renderLeaderboard();
   renderFaqs();
   renderAdminPortal();
-  setupModals();
   setupCard3DTilt();
+  initScrollEffects();
 });
 
 // Sync authoritative data from server API
 async function syncFromServer() {
   try {
-    const [statusRes, emailsRes, leadRes] = await Promise.all([
-      fetch(`${API_BASE}/tournaments/status`).catch(() => null),
-      fetch(`${API_BASE}/admin/emails`).catch(() => null),
-      fetch(`${API_BASE}/leaderboard`).catch(() => null)
+    const request = typeof AbortSignal !== 'undefined' && AbortSignal.timeout
+      ? { signal: AbortSignal.timeout(8000) }
+      : {};
+    const [statusRes, emailsRes, leadRes, squadsRes, matchRes] = await Promise.all([
+      fetch(`${API_BASE}/tournaments/status`, request).catch(() => null),
+      fetch(`${API_BASE}/admin/emails`, request).catch(() => null),
+      fetch(`${API_BASE}/leaderboard`, request).catch(() => null),
+      fetch(`${API_BASE}/squads`, request).catch(() => null),
+      fetch(`${API_BASE}/idp`, request).catch(() => null)
     ]);
+    _arenaConnection = 'offline';
+
     if (statusRes && statusRes.ok) {
       const statusData = await statusRes.json();
       if (statusData.success) {
-        _serverFilledSlots = statusData.filledSlots;
-        // Sync registrations to localStorage from server
+        _serverFilledSlots = Number(statusData.filledSlots) || 0;
+        _arenaConnection = 'connected';
+        // The public endpoint omits roster details. Preserve known details when syncing.
         if (Array.isArray(statusData.registrations)) {
-          localStorage.setItem(REGISTRATION_STORAGE_KEY, JSON.stringify(statusData.registrations));
+          const previous = JSON.parse(localStorage.getItem(REGISTRATION_STORAGE_KEY) || '[]');
+          const registrations = statusData.registrations.map(reg => ({
+            ...previous.find(saved => saved.regId === reg.regId),
+            ...reg
+          }));
+          localStorage.setItem(REGISTRATION_STORAGE_KEY, JSON.stringify(registrations));
         }
       }
     }
@@ -61,10 +80,47 @@ async function syncFromServer() {
         localStorage.setItem(STANDINGS_STORAGE_KEY, JSON.stringify(leadData.leaderboard));
       }
     }
+    if (squadsRes && squadsRes.ok) {
+      const squadsData = await squadsRes.json();
+      if (squadsData.success && Array.isArray(squadsData.squads)) {
+        _publicSquads = squadsData.squads;
+      }
+    }
+    if (matchRes && matchRes.ok) {
+      const matchData = await matchRes.json();
+      if (matchData.success) _publicMatchState = matchData;
+    }
   } catch (err) {
-    // Offline or server not running – use localStorage fallback
-    const localRegs = JSON.parse(localStorage.getItem(REGISTRATION_STORAGE_KEY) || '[]');
-    _serverFilledSlots = localRegs.length;
+    _arenaConnection = 'offline';
+  }
+  document.dispatchEvent(new Event('ip:data-updated'));
+}
+
+// Recover the real permanent roster after login / on another browser.
+async function syncCurrentSquad() {
+  const user = getCurrentUser();
+  if (!user) return;
+  try {
+    const request = typeof AbortSignal !== 'undefined' && AbortSignal.timeout
+      ? { signal: AbortSignal.timeout(8000) }
+      : {};
+    const response = await fetch(`${API_BASE}/squads/my?username=${encodeURIComponent(user.username)}`, request);
+    const data = await response.json();
+    if (!response.ok || !data.success || getCurrentUser()?.username !== user.username) return;
+    const squads = getAllSquads().filter(s => s.iglUsername !== user.username && !(Array.isArray(s.players) && s.players.some(p => p.username === user.username)));
+    if (data.squad) squads.push(data.squad);
+    localStorage.setItem(SQUADS_STORAGE_KEY, JSON.stringify(squads));
+    if (data.squad) {
+      const regs = JSON.parse(localStorage.getItem(REGISTRATION_STORAGE_KEY) || '[]');
+      const tournament = IP_DATA.tournaments[0];
+      regs.forEach(reg => {
+        if (reg.iglUsername !== data.squad.iglUsername) return;
+        Object.assign(reg, { squadId: data.squad.squadId, players: data.squad.players, tourneyId: tournament.id, tourneyName: tournament.title });
+      });
+      localStorage.setItem(REGISTRATION_STORAGE_KEY, JSON.stringify(regs));
+    }
+  } catch (err) {
+    // Keep a cached roster when the network is unavailable.
   }
 }
 
@@ -105,6 +161,15 @@ function setCurrentUser(user) {
   renderSquadBuilder();
   renderIdpPortal();
   renderAdminPortal();
+  renderHomeDashboard();
+  if (user) {
+    syncCurrentSquad().then(() => {
+      updateAuthUI();
+      renderSquadBuilder();
+      renderIdpPortal();
+      renderHomeDashboard();
+    });
+  }
 }
 
 // Toast Notifications
@@ -663,7 +728,10 @@ function initNavigation() {
 
   if (mobileMenuBtn && mobileMenu) {
     mobileMenuBtn.addEventListener('click', () => {
-      mobileMenu.classList.toggle('hidden');
+      const isOpen = mobileMenu.classList.toggle('hidden') === false;
+      mobileMenuBtn.setAttribute('aria-expanded', String(isOpen));
+      mobileMenuBtn.querySelector('i')?.classList.toggle('fa-xmark', isOpen);
+      mobileMenuBtn.querySelector('i')?.classList.toggle('fa-bars-staggered', !isOpen);
     });
   }
 
@@ -686,9 +754,17 @@ function initNavigation() {
 
     if (mobileMenu && !mobileMenu.classList.contains('hidden')) {
       mobileMenu.classList.add('hidden');
+      mobileMenuBtn?.setAttribute('aria-expanded', 'false');
+      const menuIcon = mobileMenuBtn?.querySelector('i');
+      menuIcon?.classList.remove('fa-xmark');
+      menuIcon?.classList.add('fa-bars-staggered');
     }
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
+    const scrollTarget = document.querySelector(`[data-route="${route}"][data-scroll-target]`)?.dataset.scrollTarget;
+    if (route === 'home' && scrollTarget) {
+      window.setTimeout(() => document.getElementById(scrollTarget)?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 120);
+    }
     if (route === 'register') renderSquadBuilder();
     if (route === 'idp') renderIdpPortal();
     if (route === 'leaderboard') renderLeaderboard();
@@ -712,6 +788,35 @@ function initNavigation() {
   window.addEventListener('popstate', () => {
     const hash = window.location.hash.replace('#', '') || 'home';
     navigateTo(hash);
+  });
+}
+
+function initScrollEffects() {
+  const revealItems = document.querySelectorAll('[data-reveal], .reveal-item');
+  if ('IntersectionObserver' in window) {
+    const observer = new IntersectionObserver((entries, instance) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+          instance.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.12, rootMargin: '0px 0px -30px' });
+    revealItems.forEach(item => observer.observe(item));
+  } else {
+    revealItems.forEach(item => item.classList.add('is-visible'));
+  }
+
+  const refreshButton = document.getElementById('refresh-arena');
+  refreshButton?.addEventListener('click', async () => {
+    refreshButton.disabled = true;
+    refreshButton.classList.add('is-refreshing');
+    await syncFromServer();
+    renderWeeklyWars();
+    renderHomeDashboard();
+    refreshButton.disabled = false;
+    refreshButton.classList.remove('is-refreshing');
+    showToast(_arenaConnection === 'connected' ? 'Arena data refreshed.' : 'Showing cached arena data.', 'info');
   });
 }
 
@@ -749,14 +854,19 @@ function initCountdown() {
   if (!daysEl) return;
 
   function getNextWarDate() {
-    const now = new Date();
-    const resultDate = new Date();
-    resultDate.setDate(now.getDate() + ((7 + 4 - now.getDay()) % 7 || 7));
-    resultDate.setHours(18, 0, 0, 0);
-    if (resultDate <= now) {
-      resultDate.setDate(resultDate.getDate() + 7);
+    // Weekly Wars are advertised in IST; calculate the countdown in that zone
+    // instead of silently using the visitor's local timezone.
+    const istOffset = 5.5 * 60 * 60 * 1000;
+    const now = Date.now();
+    const istNow = new Date(now + istOffset);
+    const targetIst = new Date(istNow);
+    const daysUntilThursday = (4 - targetIst.getUTCDay() + 7) % 7;
+    targetIst.setUTCDate(targetIst.getUTCDate() + daysUntilThursday);
+    targetIst.setUTCHours(18, 0, 0, 0);
+    if (targetIst.getTime() <= istNow.getTime()) {
+      targetIst.setUTCDate(targetIst.getUTCDate() + 7);
     }
-    return resultDate;
+    return new Date(targetIst.getTime() - istOffset);
   }
 
   const targetDate = getNextWarDate();
@@ -788,110 +898,136 @@ function initCountdown() {
   setInterval(update, 1000);
 }
 
-// ==================== WEEKLY WARS CARD RENDERING ====================
+// ==================== HOME DASHBOARD + WEEKLY WARS CARD RENDERING ====================
+function escapeMarkup(value) {
+  return String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
+}
+
+function getCachedRegistrations() {
+  try {
+    const registrations = JSON.parse(localStorage.getItem(REGISTRATION_STORAGE_KEY) || '[]');
+    return Array.isArray(registrations) ? registrations : [];
+  } catch (err) {
+    return [];
+  }
+}
+
+function renderHomeDashboard() {
+  const tournament = IP_DATA.tournaments[0];
+  if (!tournament) return;
+  const registrations = getCachedRegistrations();
+  const totalSlots = tournament.totalSlots || 48;
+  const filledCount = Math.max(0, Math.min(totalSlots, Number.isFinite(_serverFilledSlots) ? _serverFilledSlots : registrations.length));
+  const slotsLeft = Math.max(0, totalSlots - filledCount);
+  const statusText = filledCount >= totalSlots ? 'REGISTRATION CLOSED' : _arenaConnection === 'connected' ? 'REGISTRATION OPEN' : 'CACHED REGISTRATION';
+  const statusClass = filledCount >= totalSlots ? 'status-chip status-closed' : 'status-chip status-live';
+
+  const update = (id, value) => {
+    const element = document.getElementById(id);
+    if (element) element.textContent = value;
+  };
+  update('hero-filled-slots', slotsLeft);
+  update('hero-active-squads', `${filledCount}/${totalSlots}`);
+  update('hero-slot-count', `${filledCount} / ${totalSlots}`);
+  update('hero-event-status', statusText);
+  update('event-registration-status', statusText);
+  ['hero-event-status', 'event-registration-status'].forEach(id => {
+    const element = document.getElementById(id);
+    if (element) element.className = statusClass;
+  });
+
+  const stats = [
+    { icon: 'fa-trophy', value: IP_DATA.orgInfo.stats.warsHosted, label: 'WARS HOSTED', note: 'Official weekly competition' },
+    { icon: 'fa-indian-rupee-sign', value: IP_DATA.orgInfo.stats.prizeDistributed, label: 'PRIZE DISTRIBUTED', note: 'Earned by the field' },
+    { icon: 'fa-users', value: IP_DATA.orgInfo.stats.registeredSquads, label: 'REGISTERED SQUADS', note: 'Squads in the IP network' },
+    { icon: 'fa-bolt', value: `${filledCount}/${totalSlots}`, label: 'SEASON 12 FIELD', note: `${slotsLeft} slots still available` }
+  ];
+  const statsContainer = document.getElementById('platform-stats-grid');
+  if (statsContainer) {
+    statsContainer.innerHTML = stats.map(stat => `
+      <article class="platform-stat">
+        <span class="platform-stat-icon"><i class="fa-solid ${stat.icon}" aria-hidden="true"></i></span>
+        <strong class="platform-stat-value">${escapeMarkup(stat.value)}</strong>
+        <span class="platform-stat-label">${escapeMarkup(stat.label)}</span>
+        <span class="platform-stat-note">${escapeMarkup(stat.note)}</span>
+      </article>
+    `).join('');
+  }
+
+  const schedule = document.getElementById('match-schedule-feed');
+  const activeDay = _publicMatchState?.activeDay || 1;
+  if (schedule) {
+    schedule.innerHTML = (tournament.groupSchedule || []).map((group, index) => {
+      const day = index + 1;
+      const groupCount = registrations.filter(reg => Number(reg.groupIndex) === day).length;
+      const isActive = day === Number(activeDay) || /active/i.test(group.status || '');
+      return `
+        <article class="match-day-card ${isActive ? 'is-active' : ''}" style="--day-accent: ${day % 2 ? 'var(--ip-purple)' : 'var(--ip-blue)'}">
+          <div class="match-day-head"><strong class="match-day-number">0${day}</strong><span class="match-day-status">${isActive ? 'Active lobby' : 'Upcoming'}</span></div>
+          <h3 class="match-day-name">${escapeMarkup(group.group)}</h3>
+          <div class="match-day-meta"><span>${escapeMarkup(group.day.split('@')[0].trim())}</span><strong>${groupCount}/12</strong></div>
+        </article>
+      `;
+    }).join('');
+  }
+
+  const teams = document.getElementById('confirmed-teams-container');
+  if (teams) {
+    const visibleTeams = registrations.filter(reg => reg.teamName).slice(0, 6);
+    teams.innerHTML = visibleTeams.length ? visibleTeams.map(reg => `
+      <article class="confirmed-team-card">
+        <div class="team-card-topline"><span>${escapeMarkup(reg.group || 'SEASON 12')}</span><strong class="team-slot">#${escapeMarkup(reg.slotNumber || '—')}</strong></div>
+        <h3>${escapeMarkup(reg.teamName)} <span class="text-gradient">[${escapeMarkup(reg.teamTag || 'IP')}]</span></h3>
+        <p class="team-card-captain">Captain / IGL · @${escapeMarkup(reg.iglUsername || 'unknown')}</p>
+        <div class="team-card-bottom"><span><i class="fa-solid fa-shield-halved"></i> ${escapeMarkup(reg.status || 'CONFIRMED')}</span><strong>${escapeMarkup(reg.matchDay || 'Match schedule locked')}</strong></div>
+      </article>
+    `).join('') : `
+      <div class="squad-empty-state"><i class="fa-solid fa-satellite-dish"></i><h3>THE FIELD IS WAITING FOR ITS FIRST DROP.</h3><p>Confirmed squads appear here as registrations clear the roster lock. Bring your fireteam and make the first signal.</p></div>
+    `;
+  }
+
+  const preview = document.getElementById('home-leaderboard-preview');
+  if (preview) {
+    let standings = null;
+    try { standings = JSON.parse(localStorage.getItem(STANDINGS_STORAGE_KEY) || 'null'); } catch (err) { standings = null; }
+    const rows = standings?.isPublished && Array.isArray(standings.standings) ? standings.standings.slice(0, 3) : [];
+    preview.innerHTML = `
+      <div class="home-leaderboard-heading"><div><span class="eyebrow-label">OFFICIAL STANDINGS</span><h3>LEADERBOARD <span class="text-gradient">PULSE.</span></h3></div><i class="fa-solid fa-ranking-star"></i></div>
+      ${rows.length ? `<div class="home-leaderboard-rows">${rows.map(row => `<div class="home-leaderboard-row"><span>#${escapeMarkup(row.rank)}</span><strong>${escapeMarkup(row.team)}</strong><b>${escapeMarkup(row.totalPts)} PTS</b></div>`).join('')}</div><a href="#leaderboard" data-route="leaderboard" class="home-leaderboard-link">View full standings <i class="fa-solid fa-arrow-right"></i></a>` : `<div class="leaderboard-preview-empty"><i class="fa-solid fa-hourglass-half"></i><p>Official standings will appear here after results are published.</p><a href="#rules" data-route="rules">Read the scoring format <i class="fa-solid fa-arrow-right"></i></a></div>`}
+    `;
+    preview.querySelectorAll('[data-route]').forEach(link => link.addEventListener('click', event => {
+      event.preventDefault();
+      const route = link.dataset.route;
+      document.querySelector(`[data-route="${route}"]`)?.click();
+    }));
+  }
+}
+
 function renderWeeklyWars() {
   const container = document.getElementById('weekly-wars-container');
   const warsListContainer = document.getElementById('wars-list-container');
   if (!container && !warsListContainer) return;
 
-  // Use server count if available, otherwise localStorage
-  const existingRegs = JSON.parse(localStorage.getItem(REGISTRATION_STORAGE_KEY) || '[]');
-  const filledCount = _serverFilledSlots > 0 ? _serverFilledSlots : existingRegs.length;
-
+  const existingRegs = getCachedRegistrations();
   const html = IP_DATA.tournaments.map(t => {
     const totalSlots = t.totalSlots || 48;
+    const filledCount = Math.max(0, Math.min(totalSlots, Number.isFinite(_serverFilledSlots) ? _serverFilledSlots : existingRegs.length));
     const fillPercent = Math.round((filledCount / totalSlots) * 100);
-
+    const groups = t.groupSchedule || [];
     return `
-      <div class="glass-panel p-6 sm:p-8 relative overflow-hidden border border-white/10 hover:border-amber-500/40 transition-all flex flex-col justify-between">
-        
-        <div class="absolute top-0 right-0 bg-amber-500 text-black text-xs font-heading font-extrabold px-3 py-1 rounded-bl-lg tracking-wider uppercase">
-          48 SLOTS (4 GROUPS)
-        </div>
-
-        <div>
-          <div class="flex items-center gap-3 mb-4">
-            <span class="px-3 py-1 text-xs font-tech font-bold uppercase rounded-md bg-amber-500/20 text-amber-400 border border-amber-500/30">
-              <i class="fa-solid fa-fire text-red-500 mr-1"></i> ${t.game}
-            </span>
-            <span class="text-xs text-slate-400 font-tech">
-              <i class="fa-regular fa-clock text-amber-400 mr-1"></i> 4 Match Days @ 6:00 PM IST
-            </span>
-          </div>
-
-          <h3 class="text-2xl font-display font-extrabold text-white mb-2">
-            ${t.title}
-          </h3>
-
-          <p class="text-slate-300 text-sm mb-4 leading-relaxed font-normal">
-            ${t.description}
-          </p>
-
-          <!-- 4-Day Group Slot Division Matrix -->
-          <div class="mb-6 space-y-2">
-            <span class="text-xs font-tech text-amber-400 uppercase font-bold block">4-DAY GROUP ALLOCATION (12 SQUADS PER DAY):</span>
-            <div class="grid grid-cols-2 gap-2 text-xs font-tech">
-              <div class="bg-slate-900/90 p-2.5 rounded-lg border border-slate-800">
-                <div class="text-amber-400 font-bold">DAY 1 (GROUP A)</div>
-                <div class="text-slate-400 text-[11px]">Slots 1 - 12 (Thu)</div>
-              </div>
-              <div class="bg-slate-900/90 p-2.5 rounded-lg border border-slate-800">
-                <div class="text-amber-400 font-bold">DAY 2 (GROUP B)</div>
-                <div class="text-slate-400 text-[11px]">Slots 13 - 24 (Fri)</div>
-              </div>
-              <div class="bg-slate-900/90 p-2.5 rounded-lg border border-slate-800">
-                <div class="text-amber-400 font-bold">DAY 3 (GROUP C)</div>
-                <div class="text-slate-400 text-[11px]">Slots 25 - 36 (Sat)</div>
-              </div>
-              <div class="bg-slate-900/90 p-2.5 rounded-lg border border-slate-800">
-                <div class="text-amber-400 font-bold">DAY 4 (GROUP D)</div>
-                <div class="text-slate-400 text-[11px]">Slots 37 - 48 (Sun)</div>
-              </div>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-2 gap-3 mb-6 bg-slate-900/80 p-4 rounded-xl border border-slate-800">
-            <div>
-              <div class="text-xs text-slate-400 uppercase font-tech font-semibold">Prize Pool</div>
-              <div class="text-xl font-heading font-extrabold text-amber-400">${t.prizePool}</div>
-            </div>
-            <div>
-              <div class="text-xs text-slate-400 uppercase font-tech font-semibold">Entry Fee</div>
-              <div class="text-xl font-heading font-extrabold text-emerald-400">${t.entryFee}</div>
-            </div>
-          </div>
-        </div>
-
-        <div>
-          <!-- Slot Capacity Bar -->
-          <div class="mb-6 bg-slate-900/90 p-3.5 rounded-xl border border-slate-800">
-            <div class="flex justify-between text-xs font-tech font-semibold mb-2">
-              <span class="text-slate-300">Booked: <strong class="text-white">${filledCount} / ${totalSlots} Slots</strong></span>
-              <span class="${totalSlots - filledCount <= 5 ? 'text-red-400 font-bold' : 'text-amber-400 font-bold'}">
-                ${totalSlots - filledCount} Slots Left
-              </span>
-            </div>
-            <div class="w-full bg-slate-800 h-2.5 rounded-full overflow-hidden border border-slate-700">
-              <div class="bg-gradient-to-r from-amber-500 to-red-500 h-full rounded-full transition-all duration-500" style="width: ${fillPercent}%;"></div>
-            </div>
-          </div>
-
-          <div class="flex gap-3">
-            <button onclick="goToRegistration('${t.id}')" class="flex-1 btn-esports-primary py-3 px-4 rounded-lg font-heading font-bold text-xs tracking-wider uppercase flex items-center justify-center gap-2">
-              <i class="fa-solid fa-crosshairs"></i> Register 12-Man Slot
-            </button>
-            <button onclick="openTournamentDetails('${t.id}')" class="btn-esports-secondary py-3 px-4 rounded-lg font-heading font-bold text-xs">
-              <i class="fa-solid fa-circle-info mr-1"></i> Details
-            </button>
-          </div>
-        </div>
-
-      </div>
+      <article class="weekly-war-card interactive-card reveal-item is-visible">
+        <div class="war-card-header"><span class="war-game-label"><i class="fa-solid fa-fire-flame-curved"></i> ${escapeMarkup(t.game)} / BR SQUAD</span><span class="war-live-badge">${filledCount >= totalSlots ? 'FIELD LOCKED' : 'REGISTRATION OPEN'}</span></div>
+        <div class="war-title-row"><h3>${escapeMarkup(t.title.replace('FREE FIRE MAX ', ''))}</h3><div class="war-prize"><span>PRIZE POOL</span><strong>${escapeMarkup(t.prizePool)}</strong></div></div>
+        <p class="war-description">${escapeMarkup(t.description)}</p>
+        <div class="war-schedule-grid">${groups.map((group, index) => `<div class="war-day-pill"><span>DAY 0${index + 1} / GROUP ${String.fromCharCode(65 + index)}</span><strong>${escapeMarkup(group.slots)}</strong><em>${escapeMarkup(group.day.split('@')[0].trim())}</em></div>`).join('')}</div>
+        <div class="war-card-footer"><div class="war-capacity"><div class="war-capacity-line"><span><strong>${filledCount}</strong> / ${totalSlots} slots locked</span><b>${Math.max(0, totalSlots - filledCount)} OPEN</b></div><div class="war-progress"><span style="width: ${fillPercent}%;"></span></div></div><div class="war-actions"><button onclick="goToRegistration('${escapeMarkup(t.id)}')" class="btn-esports-primary py-2.5 px-3 rounded-lg font-heading font-bold text-[10px] tracking-wider uppercase"><i class="fa-solid fa-crosshairs"></i> Enter arena</button><button onclick="openTournamentDetails('${escapeMarkup(t.id)}')" class="btn-esports-secondary py-2.5 px-3 rounded-lg font-heading font-bold text-[10px]" aria-label="View tournament details"><i class="fa-solid fa-arrow-up-right-from-square"></i></button></div></div>
+      </article>
     `;
   }).join('');
 
   if (container) container.innerHTML = html;
   if (warsListContainer) warsListContainer.innerHTML = html;
+  renderHomeDashboard();
 }
 
 function goToRegistration(tournamentId = '') {
@@ -1263,8 +1399,11 @@ window.validatePlayerInput = async function(prefix, username) {
   try {
     const res = await fetch(`${API_BASE}/users/search?username=${encodeURIComponent(cleanUser)}`);
     const data = await res.json();
-    if (data.success && data.user) {
-      player = data.user;
+    if (data.success && data.player) {
+      player = data.player;
+    } else if (data.success && data.isLocked) {
+      statusEl.innerHTML = `<span class="text-red-400 font-semibold flex items-center gap-1.5"><i class="fa-solid fa-lock"></i> @${cleanUser} is already locked to squad "${data.squadName || 'another squad'}"!</span>`;
+      return;
     }
   } catch (err) {
     // Local fallback
@@ -1511,7 +1650,7 @@ function renderIdpPortal() {
   const user = getCurrentUser();
   const allRegs = JSON.parse(localStorage.getItem(REGISTRATION_STORAGE_KEY) || '[]');
 
-  const activeDaySquads = allRegs.filter(r => r.groupIndex === idp.activeDay);
+  const activeDaySquads = allRegs.filter(r => Number(r.groupIndex) === Number(idp.activeDay));
 
   const dayNames = {
     1: "Day 1 - Group A (Slots 1-12)",
@@ -1526,7 +1665,11 @@ function renderIdpPortal() {
   let isEligibleToday = false;
 
   if (user) {
-    userReg = allRegs.find(r => r.iglUsername === user.username || r.players.some(p => p.username === user.username));
+    const currentUsername = user.username.toLowerCase();
+    userReg = allRegs.find(r =>
+      (r.iglUsername && r.iglUsername.toLowerCase() === currentUsername) ||
+      (Array.isArray(r.players) && r.players.some(p => p.username && p.username.toLowerCase() === currentUsername))
+    );
     if (userReg && userReg.groupIndex === idp.activeDay) {
       isEligibleToday = true;
     }

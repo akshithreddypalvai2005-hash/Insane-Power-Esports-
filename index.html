@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>INSANE POWER ESPORTS | Free Fire Weekly Wars 48-Slot Hub & IDP Portal</title>
+  <title>INSANE POWER // Free Fire Esports Weekly Wars</title>
   
   <!-- SEO & Social Meta -->
-  <meta name="description" content="Official Free Fire Weekly Wars 48-Slot Portal of INSANE POWER ESPORTS. 4-Day group allocation (12 squads per day), day-specific Room ID & Password release, permanent squad builder, and live standings.">
+  <meta name="description" content="Insane Power Esports is the competitive home for Free Fire squads: build your roster, claim a 48-slot Weekly Wars drop, track match days and climb official standings.">
   <meta name="keywords" content="Insane Power Esports, Free Fire Weekly Wars, 48 Slots Free Fire, Room ID Pass, Free Fire Tournaments India, Slot Pass">
   <meta name="author" content="Insane Power Esports">
   
-  <meta property="og:title" content="INSANE POWER ESPORTS - Free Fire Weekly Wars (48 Slots)">
+  <meta property="og:title" content="INSANE POWER // Free Fire Esports Weekly Wars">
   <meta property="og:description" content="Register your Free Fire squad for Weekly Wars (48 Slots / 4 Days), access your match day Room ID & Pass, and claim Booyah glory.">
   <meta property="og:image" content="assets/images/banner.png">
   <meta property="og:type" content="website">
@@ -30,7 +30,9 @@
       theme: {
         extend: {
           colors: {
-            ipGold: '#F59E0B',
+            // Keep existing utility names used by forms; align their accent with the redesign.
+            amber: { 50: '#f5f3ff', 100: '#ede9fe', 200: '#ddd6fe', 300: '#c4b5fd', 400: '#b5a0ff', 500: '#a78bfa', 600: '#7c3aed', 700: '#6d28d9', 800: '#5b21b6', 900: '#4c1d95', 950: '#2e1065' },
+            ipGold: '#A78BFA',
             ipAmber: '#D97706',
             ipRed: '#EF4444',
             ipCyan: '#06B6D4',
@@ -51,20 +53,21 @@
   <!-- Master Stylesheet with 3D Innovations & Professional Typography -->
   <link rel="stylesheet" href="css/style.css">
 </head>
-<body class="bg-[#05070C] text-slate-100 antialiased selection:bg-amber-500 selection:text-black">
+<body class="bg-[#05070C] text-slate-100 antialiased">
+  <a class="skip-link" href="#main-content">Skip to content</a>
 
 
   <!-- TOP ALERT TICKER -->
-  <div class="relative z-50 bg-gradient-to-r from-amber-600 via-yellow-500 to-amber-600 text-black py-1.5 px-4 text-center font-heading font-bold text-xs uppercase tracking-wider overflow-hidden shadow-sm">
+  <div class="top-ticker relative z-50 text-white py-2 px-4 text-center font-heading font-bold text-xs uppercase tracking-wider overflow-hidden">
     <div class="flex items-center justify-center gap-3">
       <span class="bg-black text-amber-400 px-2 py-0.5 rounded text-[10px] font-tech font-bold">48-SLOT ARENA</span>
-      <span>FREE FIRE MAX 48 SLOTS (4 DAYS &bull; 12 SQUADS PER DAY) LIVE &bull; 1K WEEKLY WARS</span>
+      <span>FREE FIRE MAX &nbsp;/&nbsp; 48 SQUADS. 4 DAYS. ONE ARENA.</span>
       <a href="#register" data-route="register" class="underline hover:text-white font-extrabold ml-2 hidden sm:inline">REGISTER SQUAD &rarr;</a>
     </div>
   </div>
 
   <!-- NAVIGATION HEADER -->
-  <header class="sticky top-0 z-40 bg-[#05070C]/90 backdrop-blur-md border-b border-white/10">
+  <header class="site-header sticky top-0 z-40">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex items-center justify-between h-20">
         
@@ -76,28 +79,29 @@
           </div>
           <div>
             <span class="font-display font-black text-xl sm:text-2xl tracking-wide text-white block leading-none">
-              INSANE <span class="text-amber-400">POWER</span>
+              INSANE <span class="text-gradient">POWER</span>
             </span>
-            <span class="text-[10px] font-tech font-bold tracking-wider text-amber-400/90 block uppercase">48-SLOT WEEKLY WARS</span>
+            <span class="brand-subtitle">ESPORTS / WEEKLY WARS</span>
           </div>
         </a>
 
         <!-- Desktop Nav -->
-        <nav class="hidden md:flex items-center space-x-1 font-heading font-semibold text-sm tracking-wide">
+        <nav aria-label="Main navigation" class="desktop-nav hidden xl:flex items-center space-x-1 font-heading font-semibold text-sm tracking-wide">
           <a href="#home" data-route="home" class="nav-link px-3 py-2 text-slate-300 hover:text-amber-400 transition-colors active">Home</a>
-          <a href="#wars" data-route="wars" class="nav-link px-3 py-2 text-slate-300 hover:text-amber-400 transition-colors">4-Day Wars</a>
-          <a href="#register" data-route="register" class="nav-link px-3 py-2 text-amber-400 hover:text-amber-300 transition-colors">
-            <i class="fa-solid fa-crosshairs mr-1"></i> Squad Registration
+          <a href="#wars" data-route="wars" class="nav-link px-3 py-2 text-slate-300 hover:text-cyan-300 transition-colors">Weekly Wars</a>
+          <a href="#leaderboard" data-route="leaderboard" class="nav-link px-3 py-2 text-slate-300 hover:text-cyan-300 transition-colors">Leaderboard</a>
+          <a href="#rules" data-route="rules" class="nav-link px-3 py-2 text-slate-300 hover:text-cyan-300 transition-colors">Rules</a>
+          <a href="#home" data-route="home" data-scroll-target="community" class="nav-link px-3 py-2 text-slate-300 hover:text-cyan-300 transition-colors">Community</a>
+          <a href="#register" data-route="register" class="nav-link nav-link-cta px-3 py-2">
+            <i class="fa-solid fa-crosshairs mr-1"></i> Register Now
           </a>
           <a href="#idp" id="nav-idp-link" data-route="idp" class="nav-link hidden px-3 py-2 text-amber-300 hover:text-white transition-colors bg-amber-500/10 rounded-lg border border-amber-500/30">
-            <i class="fa-solid fa-key mr-1 text-amber-400"></i> Room ID & Pass (IDP)
+            <i class="fa-solid fa-key mr-1 text-amber-400"></i> Room IDP
           </a>
-          <a href="#leaderboard" data-route="leaderboard" class="nav-link px-3 py-2 text-slate-300 hover:text-amber-400 transition-colors">Points Table</a>
-          <a href="#rules" data-route="rules" class="nav-link px-3 py-2 text-slate-300 hover:text-amber-400 transition-colors">Rules & FAQ</a>
         </nav>
 
         <!-- Right Side: Player Auth & Admin -->
-        <div class="hidden sm:flex items-center gap-3">
+        <div class="header-account hidden xl:flex items-center gap-2">
           <div id="header-auth-container">
             <!-- Injected by updateAuthUI() -->
           </div>
@@ -108,8 +112,8 @@
         </div>
 
         <!-- Mobile Menu Button -->
-        <div class="flex md:hidden items-center gap-2">
-          <button id="mobile-menu-btn" class="p-2.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-amber-400">
+        <div class="flex xl:hidden items-center gap-2">
+          <button id="mobile-menu-btn" aria-label="Open navigation" aria-expanded="false" aria-controls="mobile-menu" class="p-2.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-amber-400">
             <i class="fa-solid fa-bars-staggered text-xl"></i>
           </button>
         </div>
@@ -118,98 +122,153 @@
     </div>
 
     <!-- Mobile Dropdown -->
-    <div id="mobile-menu" class="hidden md:hidden bg-[#0A0D15] border-b border-amber-500/20 px-4 pt-2 pb-6 space-y-3 font-heading font-semibold">
+    <div id="mobile-menu" class="hidden xl:hidden bg-[#0A0D15] border-b border-amber-500/20 px-4 pt-2 pb-6 space-y-3 font-heading font-semibold">
       <div id="mobile-auth-container">
         <!-- Injected by updateAuthUI() -->
       </div>
-      <a href="#home" data-route="home" class="block px-3 py-2 rounded text-slate-300 hover:bg-slate-800 hover:text-amber-400">Home</a>
-      <a href="#wars" data-route="wars" class="block px-3 py-2 rounded text-slate-300 hover:bg-slate-800 hover:text-amber-400">4-Day Weekly Wars</a>
-      <a href="#register" data-route="register" class="block px-3 py-2 rounded text-amber-400 hover:bg-slate-800">Squad Registration</a>
+      <a href="#home" data-route="home" class="mobile-nav-link" >Home</a>
+      <a href="#wars" data-route="wars" class="mobile-nav-link">Weekly Wars</a>
+      <a href="#leaderboard" data-route="leaderboard" class="mobile-nav-link">Leaderboard</a>
+      <a href="#register" data-route="register" class="mobile-nav-link mobile-nav-cta">Register Now</a>
       <a href="#idp" id="mobile-nav-idp-link" data-route="idp" class="hidden block px-3 py-2 rounded text-yellow-300 bg-amber-500/10 border border-amber-500/30">Room ID & Pass (IDP)</a>
-      <a href="#leaderboard" data-route="leaderboard" class="block px-3 py-2 rounded text-slate-300 hover:bg-slate-800 hover:text-amber-400">Points Table</a>
-      <a href="#rules" data-route="rules" class="block px-3 py-2 rounded text-slate-300 hover:bg-slate-800 hover:text-amber-400">Rules & Fair Play</a>
+      <a href="#rules" data-route="rules" class="mobile-nav-link">Rules & Fair Play</a>
+      <a href="#home" data-route="home" data-scroll-target="community" class="mobile-nav-link">Community</a>
       <a href="#admin" id="mobile-admin-nav-link" data-route="admin" class="hidden block px-3 py-2 rounded text-slate-400 hover:bg-slate-800 hover:text-amber-400">Admin / Organizer Portal</a>
       <div class="pt-2">
-        <button onclick="goToRegistration('ww-ff-12')" class="w-full btn-esports-primary py-3 rounded-lg text-center text-xs font-bold uppercase tracking-wider">
-          Squad Registration Hub
+           <button onclick="goToRegistration('ww-ff-12')" class="w-full btn-esports-primary py-3 rounded-lg text-center text-xs font-bold uppercase tracking-wider">
+           Enter The Arena
         </button>
       </div>
     </div>
   </header>
 
   <!-- ==================== MAIN VIEWS ==================== -->
-  <main class="relative z-10 min-h-screen">
+  <main id="main-content" tabindex="-1" class="relative z-10 min-h-screen">
 
     <!-- ==================== VIEW 1: HOME ==================== -->
     <section id="view-home" class="page-section">
       
-      <!-- HERO BANNER -->
-      <div class="relative overflow-hidden pt-6 pb-16 md:pt-10 md:pb-24 bg-grid-pattern">
+      <!-- CINEMATIC HERO -->
+      <div class="hero-shell relative overflow-hidden bg-grid-pattern">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          
-          <!-- OFFICIAL TOURNAMENT BANNER -->
-          <div class="mb-10 sm:mb-12 relative rounded-2xl overflow-hidden border border-amber-500/40 shadow-[0_0_40px_rgba(245,158,11,0.25)] card-3d group">
-            <img src="assets/images/banner.png" alt="Insane Power Esports Official Banner" class="w-full h-auto object-cover max-h-[380px] sm:max-h-[440px] rounded-2xl transition-transform duration-500 group-hover:scale-[1.01]">
-            <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none"></div>
-            <div class="absolute bottom-3 right-4 sm:bottom-4 sm:right-6 hidden sm:flex items-center gap-2 bg-black/80 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-amber-500/30 text-xs font-tech text-amber-400 font-bold uppercase tracking-widest shadow-lg">
-              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> PLAY &bull; COMPETE &bull; GROW
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+          <div class="hero-layout grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
             
             <!-- Left Hero Details -->
             <div class="lg:col-span-7 space-y-6 text-center lg:text-left">
               
-              <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-tech font-bold uppercase tracking-wider">
-                <span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
-                FREE FIRE MAX 48 SLOTS (4 DAYS &bull; 12 SQUADS PER DAY)
+              <div class="live-pill">
+                <span class="live-dot"></span>
+                THE NEXT GENERATION OF FREE FIRE
               </div>
 
-              <h1 class="font-display font-black text-4xl sm:text-5xl md:text-6xl lg:text-7xl tracking-tight text-white leading-tight">
-                INSANE POWER <br>
-                <span class="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-yellow-200 to-amber-500 text-glow-gold">
-                  WEEKLY WARS
-                </span>
+              <h1 class="hero-title font-display font-black text-4xl sm:text-5xl md:text-6xl lg:text-7xl tracking-tight text-white leading-tight">
+                ENTER THE<br><span class="text-gradient">BATTLE.</span><br>
+                OWN THE <span class="hero-title-lime">WEEK.</span>
               </h1>
 
               <p class="text-slate-300 font-body text-base sm:text-lg max-w-2xl mx-auto lg:mx-0 leading-relaxed font-normal">
-                48 Squads divided line-wise across 4 Match Days (12 squads per group). Exclusive Day-Wise Room ID & Password access for today's 12 Captains only with ₹1,000 Weekly Prize Pool!
+                The competitive home for Free Fire squads. Lock your roster, claim your slot, and fight through the 48-slot Weekly Wars arena.
               </p>
 
               <!-- Main CTAs -->
               <div class="flex flex-wrap items-center justify-center lg:justify-start gap-4 pt-2">
-                <a href="#register" data-route="register" class="btn-esports-primary px-8 py-3.5 rounded-lg font-heading font-bold text-sm sm:text-base uppercase tracking-wider shadow-lg flex items-center gap-3">
-                  <i class="fa-solid fa-gamepad text-lg"></i> Register Here
+                <a href="#register" data-route="register" class="btn-esports-primary px-7 py-3.5 rounded-lg font-heading font-bold text-sm sm:text-base uppercase tracking-wider shadow-lg flex items-center gap-3">
+                  <i class="fa-solid fa-gamepad text-lg"></i> Register For Weekly War
+                </a>
+                <a href="#leaderboard" data-route="leaderboard" class="btn-esports-secondary px-7 py-3.5 rounded-lg font-heading font-bold text-sm sm:text-base uppercase tracking-wider flex items-center gap-3">
+                  <i class="fa-solid fa-chart-simple"></i> View Leaderboard
                 </a>
               </div>
 
             </div>
 
-            <!-- Right Hero: Esports Crest -->
-            <div class="lg:col-span-5 flex justify-center relative">
-              <div class="relative flex items-center justify-center">
-                <div class="absolute inset-0 bg-amber-500/20 rounded-full blur-3xl scale-125"></div>
-                <img src="assets/images/logo.png" alt="Insane Power Esports" class="relative z-10 w-56 h-56 sm:w-72 sm:h-72 object-contain drop-shadow-[0_0_35px_rgba(245,158,11,0.5)] hover:scale-105 transition-transform duration-300">
-                <div class="absolute -bottom-4 bg-black/90 px-4 py-1.5 rounded-full border border-amber-500/40 text-amber-400 font-tech text-xs font-bold uppercase tracking-widest shadow-xl flex items-center gap-2 z-20">
-                  <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> 48-SLOT ARENA LIVE
+            <!-- Right Hero: Live Arena Console -->
+            <div class="lg:col-span-5 hero-console-wrap">
+              <div class="hero-orbit hero-orbit-one"></div>
+              <div class="hero-orbit hero-orbit-two"></div>
+              <div class="hero-console glass-panel border-beam-card">
+                <div class="flex items-center justify-between mb-8">
+                  <span class="eyebrow-label">CURRENT EVENT</span>
+                  <span class="status-chip" id="hero-event-status">SYNCING</span>
                 </div>
+                <img src="assets/images/logo.png" alt="Insane Power Esports" class="hero-console-logo">
+                <div class="text-center mt-5">
+                  <p class="font-tech text-xs text-slate-400 uppercase tracking-[0.25em]">Free Fire MAX</p>
+                  <h2 class="font-display text-2xl sm:text-3xl font-black text-white mt-2">Weekly Wars / S12</h2>
+                </div>
+                <div class="hero-console-grid">
+                  <div><span>FORMAT</span><strong>48 SLOTS</strong></div>
+                  <div><span>PRIZE POOL</span><strong class="text-lime">₹1,000</strong></div>
+                  <div><span>REGISTERED</span><strong id="hero-slot-count" class="text-cyan-300">— / 48</strong></div>
+                  <div><span>TIME</span><strong>6:00 PM IST</strong></div>
+                </div>
+                <div class="hero-console-footer"><span class="live-dot"></span> 4 match days / 12 squads per day</div>
               </div>
             </div>
 
           </div>
         </div>
+          <div class="hero-metrics grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div class="metric-card"><span id="hero-filled-slots" class="metric-value">48</span><span class="metric-label">SLOTS / WAR</span></div>
+            <div class="metric-card"><span class="metric-value">4</span><span class="metric-label">MATCH DAYS</span></div>
+            <div class="metric-card"><span class="metric-value">₹1K</span><span class="metric-label">PRIZE POOL</span></div>
+            <div class="metric-card"><span id="hero-active-squads" class="metric-value">—/48</span><span class="metric-label">REGISTERED SQUADS</span></div>
+          </div>
+        </div>
+
+      <!-- LIVE EVENT SECTION -->
+      <div class="section-shell max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="section-heading-row">
+          <div><span class="eyebrow-label">LIVE / UPCOMING WAR</span><h2 class="section-title">THIS IS <span class="text-gradient">YOUR ARENA.</span></h2></div>
+          <a href="#register" data-route="register" class="section-link">Enter the arena <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
+        </div>
+        <div class="live-event-card glass-panel border-beam-card">
+          <div class="live-event-main"><span id="event-registration-status" class="status-chip">CHECKING REGISTRATION</span><h3 class="font-display text-2xl sm:text-4xl font-black text-white mt-4">FREE FIRE MAX WEEKLY WARS <span class="text-gradient">/ SEASON 12</span></h3><p class="text-slate-400 text-sm mt-3 max-w-2xl">Build once, compete weekly. Your squad is assigned a match day automatically as slots fill.</p></div>
+          <div class="live-event-data"><div><span>FORMAT</span><strong>48 SLOTS / 4 DAYS</strong></div><div><span>SCHEDULE</span><strong>THU–SUN / 6:00 PM</strong></div><div><span>ENTRY</span><strong class="text-lime">100% FREE</strong></div></div>
+        </div>
+      </div>
+
+      <!-- MATCH CENTER / LIVE-UPCOMING FEED -->
+      <div class="section-shell match-center-shell max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" data-reveal>
+        <div class="section-heading-row">
+          <div>
+            <span class="eyebrow-label">MATCH CENTER / REAL-TIME PULSE</span>
+            <h2 class="section-title">YOUR NEXT <span class="text-gradient">DROP.</span></h2>
+          </div>
+          <button id="refresh-arena" type="button" class="section-link section-link-static"><i class="fa-solid fa-arrows-rotate" aria-hidden="true"></i> Refresh data</button>
+        </div>
+        <div class="match-center-grid">
+          <article class="next-match-card glass-panel border-beam-card interactive-card" data-reveal>
+            <div class="match-card-topline"><span class="status-chip"><i class="fa-regular fa-clock"></i> NEXT SCHEDULED DROP</span><span class="match-card-code">WW / S12</span></div>
+            <div class="next-match-heading"><div><span class="eyebrow-label">WEEKLY WARS</span><h3>SEASON 12 <span class="text-gradient">QUALIFIER</span></h3></div><i class="fa-solid fa-crosshairs"></i></div>
+            <p class="match-card-copy"><span id="next-match-label">Weekly schedule · Thu–Sun at 6:00 PM IST.</span> Room details are released by the organizer for your assigned group.</p>
+            <div class="countdown-panel" aria-label="Countdown to next weekly war">
+              <div><strong id="cd-days">00</strong><span>DAYS</span></div><b>:</b><div><strong id="cd-hours">00</strong><span>HOURS</span></div><b>:</b><div><strong id="cd-mins">00</strong><span>MIN</span></div><b>:</b><div><strong id="cd-secs">00</strong><span>SEC</span></div>
+            </div>
+            <div class="match-card-meta"><span><i class="fa-regular fa-calendar"></i> THU — SUN</span><span><i class="fa-regular fa-clock"></i> 6:00 PM IST</span><span><i class="fa-solid fa-trophy"></i> ₹1,000 POOL</span></div>
+          </article>
+          <div id="match-schedule-feed" class="match-schedule-feed" data-reveal aria-live="polite"><!-- Populated from the tournament schedule --></div>
+        </div>
+      </div>
+
+      <!-- PLATFORM SIGNALS -->
+      <div class="section-shell platform-signals-shell max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" data-reveal>
+        <div class="section-heading-row">
+          <div><span class="eyebrow-label">THE IP SIGNAL</span><h2 class="section-title">BUILT FOR <span class="text-gradient">THE GRIND.</span></h2></div>
+          <p class="section-heading-note">One profile. One roster. Every weekly war.</p>
+        </div>
+        <div id="platform-stats-grid" class="platform-stats-grid"><!-- Populated from platform data --></div>
       </div>
 
       <!-- ACTIVE FREE FIRE WEEKLY WARS SECTION -->
-      <div class="py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-t border-white/10">
+      <div class="section-shell max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-10">
           <div>
             <div class="inline-flex items-center gap-2 text-amber-400 font-tech text-xs font-bold uppercase tracking-widest mb-1">
               <i class="fa-solid fa-fire text-red-500"></i> FREE FIRE MAX 48 SLOTS
             </div>
             <h2 class="font-display font-extrabold text-3xl sm:text-4xl text-white">
-              WEEKLY WARS <span class="text-amber-400">4-DAY ARENA</span>
+               WEEKLY WARS <span class="text-gradient">4-DAY ARENA</span>
             </h2>
             <p class="text-slate-400 text-sm max-w-xl mt-1">
               Slots are allocated line-wise: Slots 1–12 (Day 1), Slots 13–24 (Day 2), Slots 25–36 (Day 3), Slots 37–48 (Day 4).
@@ -222,18 +281,19 @@
         </div>
 
         <!-- Weekly Wars Cards Container -->
-        <div id="weekly-wars-container" class="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <!-- Populated by renderWeeklyWars() -->
+        <div class="arena-dashboard-grid">
+          <div id="weekly-wars-container"><!-- Populated by renderWeeklyWars() --></div>
+          <aside id="home-leaderboard-preview" class="home-leaderboard glass-panel" aria-label="Official standings preview"><!-- Published results only --></aside>
         </div>
       </div>
 
-      <!-- 4-DAY GROUP ALLOCATION INFO STRIP WITH 3D TILT -->
-      <div class="py-16 bg-slate-950/60 border-t border-white/10">
+      <!-- 4-DAY GROUP ALLOCATION INFO STRIP -->
+      <div class="section-shell section-dark">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           
           <div class="text-center max-w-2xl mx-auto mb-12">
             <span class="text-xs font-tech text-amber-400 uppercase tracking-widest font-bold">STRUCTURED 48 SLOTS</span>
-            <h2 class="font-display font-extrabold text-3xl sm:text-4xl text-white mt-1">4-DAY <span class="text-amber-400">MATCH SCHEDULE</span></h2>
+             <h2 class="font-display font-extrabold text-3xl sm:text-4xl text-white mt-1">4-DAY <span class="text-gradient">MATCH SCHEDULE</span></h2>
             <p class="text-slate-400 text-sm mt-2">12 Squads battle per day. Only the active 12 Captains get access to each day's Room ID & Password!</p>
           </div>
 
@@ -299,6 +359,29 @@
 
         </div>
       </div>
+
+      <!-- CONFIRMED SQUADS / TEAM CARDS -->
+      <div class="section-shell confirmed-squads-shell max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" data-reveal>
+        <div class="section-heading-row">
+          <div><span class="eyebrow-label">ROSTER LOCK / LIVE FIELD</span><h2 class="section-title">MEET THE <span class="text-gradient">FIRETEAMS.</span></h2></div>
+          <a href="#register" data-route="register" class="section-link">Lock your squad <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
+        </div>
+        <div id="confirmed-teams-container" class="confirmed-teams-grid" aria-live="polite"><!-- Populated from live registrations --></div>
+      </div>
+
+      <!-- HOW IT WORKS / WHY INSANE POWER -->
+      <div class="section-shell max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid lg:grid-cols-2 gap-8">
+          <div><span class="eyebrow-label">HOW IT WORKS</span><h2 class="section-title mt-2">FROM LOGIN TO <span class="text-gradient">BOOYAH.</span></h2><div class="process-list mt-8"><div class="process-step"><b>01</b><div><h3>Create your player profile</h3><p>Register your IGN, UID, and player details once.</p></div></div><div class="process-step"><b>02</b><div><h3>Build your permanent squad</h3><p>Invite verified teammates and lock your roster.</p></div></div><div class="process-step"><b>03</b><div><h3>Claim your war slot</h3><p>Register in line and receive your match-day group.</p></div></div><div class="process-step"><b>04</b><div><h3>Play, score, climb</h3><p>Unlock your IDP, compete, and rise on the leaderboard.</p></div></div></div></div>
+          <div class="why-panel glass-panel"><span class="eyebrow-label">WHY INSANE POWER</span><h2 class="section-title mt-2">BUILT FOR <span class="hero-title-lime">COMPETITORS.</span></h2><div class="feature-grid mt-8"><div class="feature-item"><i class="fa-solid fa-calendar-check"></i><h3>Weekly events</h3><p>Consistent competitive action for serious squads.</p></div><div class="feature-item"><i class="fa-solid fa-shield-halved"></i><h3>Secure access</h3><p>Day-wise room details for the active match group.</p></div><div class="feature-item"><i class="fa-solid fa-ranking-star"></i><h3>Transparent results</h3><p>Official standings and points after every war.</p></div><div class="feature-item"><i class="fa-solid fa-users"></i><h3>Squad identity</h3><p>Build your roster once and keep competing together.</p></div></div></div>
+        </div>
+      </div>
+
+      <div id="community" class="section-shell community-shell max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" data-reveal>
+        <div class="community-cta glass-panel"><div><span class="eyebrow-label">THE COMMUNITY</span><h2 class="section-title mt-2">FIND YOUR <span class="text-gradient">FIRETEAM.</span></h2><p class="text-slate-400 text-sm mt-3 max-w-xl">Follow the action, catch match-day updates, and stay connected with the Insane Power battlegrounds.</p></div><div class="social-actions"><a href="https://youtube.com/@InsanePowerEsports" target="_blank" class="social-action"><i class="fa-brands fa-youtube"></i><span>YouTube</span></a><a href="https://www.instagram.com/insanexpoweresports/" target="_blank" class="social-action"><i class="fa-brands fa-instagram"></i><span>Instagram</span></a><a href="#register" data-route="register" class="social-action social-action-primary"><i class="fa-solid fa-arrow-right"></i><span>Join the war</span></a></div></div>
+      </div>
+
+      <div class="final-cta section-shell max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"><div class="final-cta-inner"><span class="eyebrow-label">NEXT MATCH STARTS WITH YOU</span><h2 class="font-display text-4xl sm:text-6xl font-black text-white mt-3">READY TO ENTER <span class="text-gradient">THE BATTLE?</span></h2><div class="flex flex-wrap justify-center gap-3 mt-7"><a href="#register" data-route="register" class="btn-esports-primary px-7 py-3.5 rounded-lg font-heading font-bold uppercase">Register your squad</a><a href="#wars" data-route="wars" class="btn-esports-secondary px-7 py-3.5 rounded-lg font-heading font-bold uppercase">Explore weekly wars</a></div></div></div>
 
     </section>
 
@@ -500,7 +583,7 @@
           </div>
         </div>
 
-        <div class="flex items-center gap-4 text-xs font-heading font-semibold text-slate-400">
+        <div class="footer-links flex flex-wrap justify-center items-center gap-4 text-xs font-heading font-semibold text-slate-400">
           <a href="#home" data-route="home" class="hover:text-amber-400">Home</a>
           <a href="#wars" data-route="wars" class="hover:text-amber-400">4-Day Wars</a>
           <a href="#register" data-route="register" class="hover:text-amber-400">Squad Registration</a>
