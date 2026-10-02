@@ -12,7 +12,7 @@
   
   <meta property="og:title" content="INSANE POWER ESPORTS - Free Fire Weekly Wars (48 Slots)">
   <meta property="og:description" content="Register your Free Fire squad for Weekly Wars (48 Slots / 4 Days), access your match day Room ID & Pass, and claim Booyah glory.">
-  <meta property="og:image" content="assets/images/logo.png">
+  <meta property="og:image" content="assets/images/banner.png">
   <meta property="og:type" content="website">
 
   <!-- Favicon -->
@@ -89,7 +89,7 @@
           <a href="#register" data-route="register" class="nav-link px-3 py-2 text-amber-400 hover:text-amber-300 transition-colors">
             <i class="fa-solid fa-crosshairs mr-1"></i> Squad Registration
           </a>
-          <a href="#idp" data-route="idp" class="nav-link px-3 py-2 text-amber-300 hover:text-white transition-colors bg-amber-500/10 rounded-lg border border-amber-500/30">
+          <a href="#idp" id="nav-idp-link" data-route="idp" class="nav-link hidden px-3 py-2 text-amber-300 hover:text-white transition-colors bg-amber-500/10 rounded-lg border border-amber-500/30">
             <i class="fa-solid fa-key mr-1 text-amber-400"></i> Room ID & Pass (IDP)
           </a>
           <a href="#leaderboard" data-route="leaderboard" class="nav-link px-3 py-2 text-slate-300 hover:text-amber-400 transition-colors">Points Table</a>
@@ -125,7 +125,7 @@
       <a href="#home" data-route="home" class="block px-3 py-2 rounded text-slate-300 hover:bg-slate-800 hover:text-amber-400">Home</a>
       <a href="#wars" data-route="wars" class="block px-3 py-2 rounded text-slate-300 hover:bg-slate-800 hover:text-amber-400">4-Day Weekly Wars</a>
       <a href="#register" data-route="register" class="block px-3 py-2 rounded text-amber-400 hover:bg-slate-800">Squad Registration</a>
-      <a href="#idp" data-route="idp" class="block px-3 py-2 rounded text-yellow-300 bg-amber-500/10 border border-amber-500/30">Room ID & Pass (IDP)</a>
+      <a href="#idp" id="mobile-nav-idp-link" data-route="idp" class="hidden block px-3 py-2 rounded text-yellow-300 bg-amber-500/10 border border-amber-500/30">Room ID & Pass (IDP)</a>
       <a href="#leaderboard" data-route="leaderboard" class="block px-3 py-2 rounded text-slate-300 hover:bg-slate-800 hover:text-amber-400">Points Table</a>
       <a href="#rules" data-route="rules" class="block px-3 py-2 rounded text-slate-300 hover:bg-slate-800 hover:text-amber-400">Rules & Fair Play</a>
       <a href="#admin" id="mobile-admin-nav-link" data-route="admin" class="hidden block px-3 py-2 rounded text-slate-400 hover:bg-slate-800 hover:text-amber-400">Admin / Organizer Portal</a>
@@ -144,8 +144,18 @@
     <section id="view-home" class="page-section">
       
       <!-- HERO BANNER -->
-      <div class="relative overflow-hidden pt-12 pb-16 md:pt-20 md:pb-28 bg-grid-pattern">
+      <div class="relative overflow-hidden pt-6 pb-16 md:pt-10 md:pb-24 bg-grid-pattern">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          
+          <!-- OFFICIAL TOURNAMENT BANNER -->
+          <div class="mb-10 sm:mb-12 relative rounded-2xl overflow-hidden border border-amber-500/40 shadow-[0_0_40px_rgba(245,158,11,0.25)] card-3d group">
+            <img src="assets/images/banner.png" alt="Insane Power Esports Official Banner" class="w-full h-auto object-cover max-h-[380px] sm:max-h-[440px] rounded-2xl transition-transform duration-500 group-hover:scale-[1.01]">
+            <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none"></div>
+            <div class="absolute bottom-3 right-4 sm:bottom-4 sm:right-6 hidden sm:flex items-center gap-2 bg-black/80 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-amber-500/30 text-xs font-tech text-amber-400 font-bold uppercase tracking-widest shadow-lg">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> PLAY &bull; COMPETE &bull; GROW
+            </div>
+          </div>
+
           <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
             
             <!-- Left Hero Details -->
@@ -169,46 +179,9 @@
 
               <!-- Main CTAs -->
               <div class="flex flex-wrap items-center justify-center lg:justify-start gap-4 pt-2">
-                <a href="#register" data-route="register" class="btn-esports-primary px-7 py-3.5 rounded-lg font-heading font-bold text-sm uppercase tracking-wider shadow-lg flex items-center gap-3">
-                  <i class="fa-solid fa-gamepad text-lg"></i> Register 12-Man Slot
+                <a href="#register" data-route="register" class="btn-esports-primary px-8 py-3.5 rounded-lg font-heading font-bold text-sm sm:text-base uppercase tracking-wider shadow-lg flex items-center gap-3">
+                  <i class="fa-solid fa-gamepad text-lg"></i> Register Here
                 </a>
-                <a href="#idp" data-route="idp" class="btn-esports-secondary px-7 py-3.5 rounded-lg font-heading font-bold text-sm uppercase tracking-wider flex items-center gap-3">
-                  <i class="fa-solid fa-key text-amber-400"></i> Room ID & Pass (IDP)
-                </a>
-                <button onclick="openAuthModal()" class="px-6 py-3.5 rounded-lg font-heading font-semibold text-sm bg-slate-900 text-slate-200 border border-slate-700 hover:border-amber-400 transition-colors flex items-center gap-2">
-                  <i class="fa-solid fa-user-plus text-base text-amber-400"></i> Player Login / Sign Up
-                </button>
-              </div>
-
-              <!-- War Countdown Box with 3D Tilt -->
-              <div class="pt-4 card-3d-wrap inline-block">
-                <div class="card-3d glass-panel p-4 rounded-xl text-left border border-amber-500/30">
-                  <div class="card-glare"></div>
-                  <span class="text-xs font-tech text-amber-400 uppercase tracking-widest block mb-2 font-bold">
-                    <i class="fa-regular fa-clock mr-1"></i> NEXT 12-SQUAD MATCH DAY STARTS IN:
-                  </span>
-                  <div class="flex items-center gap-3 font-display font-extrabold text-3xl sm:text-4xl text-white">
-                    <div class="text-center bg-slate-950/90 px-3.5 py-1.5 rounded-lg border border-slate-800">
-                      <span id="cd-days" class="text-amber-400 block font-tech">00</span>
-                      <span class="text-[10px] font-tech text-slate-400 block uppercase font-normal">DAYS</span>
-                    </div>
-                    <span class="text-amber-500">:</span>
-                    <div class="text-center bg-slate-950/90 px-3.5 py-1.5 rounded-lg border border-slate-800">
-                      <span id="cd-hours" class="text-amber-400 block font-tech">00</span>
-                      <span class="text-[10px] font-tech text-slate-400 block uppercase font-normal">HRS</span>
-                    </div>
-                    <span class="text-amber-500">:</span>
-                    <div class="text-center bg-slate-950/90 px-3.5 py-1.5 rounded-lg border border-slate-800">
-                      <span id="cd-mins" class="text-amber-400 block font-tech">00</span>
-                      <span class="text-[10px] font-tech text-slate-400 block uppercase font-normal">MIN</span>
-                    </div>
-                    <span class="text-amber-500">:</span>
-                    <div class="text-center bg-slate-950/90 px-3.5 py-1.5 rounded-lg border border-slate-800">
-                      <span id="cd-secs" class="text-red-400 block font-tech">00</span>
-                      <span class="text-[10px] font-tech text-slate-400 block uppercase font-normal">SEC</span>
-                    </div>
-                  </div>
-                </div>
               </div>
 
             </div>
@@ -531,7 +504,7 @@
           <a href="#home" data-route="home" class="hover:text-amber-400">Home</a>
           <a href="#wars" data-route="wars" class="hover:text-amber-400">4-Day Wars</a>
           <a href="#register" data-route="register" class="hover:text-amber-400">Squad Registration</a>
-          <a href="#idp" data-route="idp" class="hover:text-amber-400">Room ID & Pass (IDP)</a>
+          <a href="#idp" id="footer-idp-link" data-route="idp" class="hidden hover:text-amber-400">Room ID & Pass (IDP)</a>
           <a href="#leaderboard" data-route="leaderboard" class="hover:text-amber-400">Points Table</a>
           <a href="#rules" data-route="rules" class="hover:text-amber-400">Rulebook</a>
         </div>

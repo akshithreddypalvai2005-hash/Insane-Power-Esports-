@@ -34,11 +34,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 // Sync authoritative data from server API
 async function syncFromServer() {
   try {
-    const [statusRes, emailsRes] = await Promise.all([
-      fetch(`${API_BASE}/tournaments/status`),
-      fetch(`${API_BASE}/admin/emails`)
+    const [statusRes, emailsRes, leadRes] = await Promise.all([
+      fetch(`${API_BASE}/tournaments/status`).catch(() => null),
+      fetch(`${API_BASE}/admin/emails`).catch(() => null),
+      fetch(`${API_BASE}/leaderboard`).catch(() => null)
     ]);
-    if (statusRes.ok) {
+    if (statusRes && statusRes.ok) {
       const statusData = await statusRes.json();
       if (statusData.success) {
         _serverFilledSlots = statusData.filledSlots;
@@ -48,10 +49,16 @@ async function syncFromServer() {
         }
       }
     }
-    if (emailsRes.ok) {
+    if (emailsRes && emailsRes.ok) {
       const emailsData = await emailsRes.json();
       if (emailsData.success && Array.isArray(emailsData.emails)) {
         _authorizedAdminEmails = emailsData.emails;
+      }
+    }
+    if (leadRes && leadRes.ok) {
+      const leadData = await leadRes.json();
+      if (leadData.success && leadData.leaderboard) {
+        localStorage.setItem(STANDINGS_STORAGE_KEY, JSON.stringify(leadData.leaderboard));
       }
     }
   } catch (err) {
@@ -609,6 +616,27 @@ function updateAuthUI() {
       mobileAdminNav.classList.add('hidden');
     }
   }
+
+  // Toggle Room ID & Pass (IDP) button visibility: only registered players (or admin) can see it
+  const idpNav = document.getElementById('nav-idp-link');
+  const mobileIdpNav = document.getElementById('mobile-nav-idp-link');
+  const footerIdpNav = document.getElementById('footer-idp-link');
+
+  const allRegs = JSON.parse(localStorage.getItem(REGISTRATION_STORAGE_KEY) || '[]');
+  const isRegisteredPlayer = user ? allRegs.some(r =>
+    (r.iglUsername && r.iglUsername.toLowerCase() === user.username.toLowerCase()) ||
+    (Array.isArray(r.players) && r.players.some(p => p.username && p.username.toLowerCase() === user.username.toLowerCase()))
+  ) : false;
+  const canSeeIdp = isRegisteredPlayer || isAdm;
+
+  [idpNav, mobileIdpNav, footerIdpNav].forEach(el => {
+    if (!el) return;
+    if (canSeeIdp) {
+      el.classList.remove('hidden');
+    } else {
+      el.classList.add('hidden');
+    }
+  });
 }
 
 function openAuthModal() {
@@ -1395,6 +1423,7 @@ window.registerPermanentSquad = async function(squadId, tourneyId) {
       renderWeeklyWars();
       renderSquadBuilder();
       renderIdpPortal();
+      updateAuthUI();
       showToast(`Registered! Slot #${data.registration.slotNumber} assigned to ${squad.teamName}`, 'success');
       renderPassModal(data.registration);
       return;
@@ -1457,6 +1486,7 @@ window.registerPermanentSquad = async function(squadId, tourneyId) {
   renderWeeklyWars();
   renderSquadBuilder();
   renderIdpPortal();
+  updateAuthUI();
 
   showToast(`Registered! Slot #${assignedSlot} assigned to ${squad.teamName} [${assignedGroup}]`, 'success');
   renderPassModal(newReg);
@@ -1757,8 +1787,10 @@ function renderLeaderboard() {
   const isPublished = savedStandings ? savedStandings.isPublished : IP_DATA.leaderboards.isPublished;
   const standings = savedStandings ? savedStandings.standings : IP_DATA.leaderboards.standings;
   const mvp = savedStandings ? savedStandings.mvp : IP_DATA.leaderboards.mvp;
+  const imageUrl = savedStandings?.imageUrl || null;
+  const season = savedStandings?.season || "FREE FIRE WEEKLY WARS - SEASON 12 FINALS";
 
-  if (!isPublished || !standings || standings.length === 0) {
+  if (!isPublished || (!imageUrl && (!standings || standings.length === 0))) {
     container.innerHTML = `
       <div class="glass-panel p-12 text-center rounded-2xl border border-white/10">
         <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 text-2xl">
@@ -1778,6 +1810,41 @@ function renderLeaderboard() {
   }
 
   container.innerHTML = `
+    <!-- HEADER -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
+      <div>
+        <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/20 text-amber-400 text-xs font-tech font-bold uppercase border border-amber-500/40">
+          <i class="fa-solid fa-trophy"></i> OFFICIAL STANDINGS
+        </span>
+        <h2 class="font-display font-black text-2xl sm:text-3xl text-white mt-1">${season}</h2>
+      </div>
+      ${imageUrl ? `
+        <div class="flex items-center gap-2">
+          <a href="${imageUrl}" target="_blank" download="InsanePower_PointsTable.png" class="btn-esports-secondary px-4 py-2 rounded-lg text-xs font-tech font-bold uppercase inline-flex items-center gap-1.5 shadow-md">
+            <i class="fa-solid fa-download text-amber-400"></i> Download
+          </a>
+          <a href="${imageUrl}" target="_blank" class="btn-esports-primary px-4 py-2 rounded-lg text-xs font-tech font-bold uppercase inline-flex items-center gap-1.5 shadow-md">
+            <i class="fa-solid fa-expand"></i> View Fullscreen
+          </a>
+        </div>
+      ` : ''}
+    </div>
+
+    ${imageUrl ? `
+      <!-- UPLOADED POINTS TABLE IMAGE GRAPHIC -->
+      <div class="glass-panel p-4 sm:p-6 rounded-2xl border border-amber-500/40 mb-8 shadow-2xl relative overflow-hidden bg-slate-950/80">
+        <div class="flex items-center justify-between text-xs font-tech text-amber-400 uppercase font-bold mb-3 px-1">
+          <span class="flex items-center gap-1.5">
+            <i class="fa-solid fa-circle-check text-emerald-400"></i> OFFICIAL MATCH RESULT SCOREBOARD
+          </span>
+          <span class="text-slate-400 text-[11px] font-normal hidden sm:inline">Click image to open high-resolution view</span>
+        </div>
+        <a href="${imageUrl}" target="_blank" class="block cursor-zoom-in group rounded-xl overflow-hidden border border-slate-800 bg-black/90 hover:border-amber-500/50 transition-colors">
+          <img src="${imageUrl}" alt="Official Points Table" class="w-full h-auto object-contain rounded-xl max-h-[850px] mx-auto group-hover:scale-[1.005] transition-transform duration-300">
+        </a>
+      </div>
+    ` : ''}
+
     ${mvp ? `
       <div class="glass-panel p-6 border border-amber-500/30 rounded-2xl relative overflow-hidden flex flex-col sm:flex-row items-center justify-between gap-6 mb-8">
         <div class="flex items-center gap-4">
@@ -1813,54 +1880,56 @@ function renderLeaderboard() {
       </div>
     ` : ''}
 
-    <div class="glass-panel rounded-2xl overflow-hidden border border-white/10">
-      <div class="overflow-x-auto">
-        <table class="w-full text-left border-collapse">
-          <thead>
-            <tr class="bg-slate-950 text-xs font-tech text-slate-400 uppercase tracking-wider border-b border-slate-800">
-              <th class="py-3.5 px-4 text-center">RANK</th>
-              <th class="py-3.5 px-4">TEAM NAME</th>
-              <th class="py-3.5 px-4 text-center">MATCHES</th>
-              <th class="py-3.5 px-4 text-center">BOOYAHS</th>
-              <th class="py-3.5 px-4 text-center">PLACE PTS</th>
-              <th class="py-3.5 px-4 text-center">KILL PTS</th>
-              <th class="py-3.5 px-4 text-center">TOTAL PTS</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-slate-800/60 font-tech text-xs">
-            ${standings.map(s => {
-              let rankBadge = `<span class="font-tech font-bold text-slate-400">#${s.rank}</span>`;
-              let rowClass = "leaderboard-row";
+    ${standings && standings.length > 0 ? `
+      <div class="glass-panel rounded-2xl overflow-hidden border border-white/10">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-slate-950 text-xs font-tech text-slate-400 uppercase tracking-wider border-b border-slate-800">
+                <th class="py-3.5 px-4 text-center">RANK</th>
+                <th class="py-3.5 px-4">TEAM NAME</th>
+                <th class="py-3.5 px-4 text-center">MATCHES</th>
+                <th class="py-3.5 px-4 text-center">BOOYAHS</th>
+                <th class="py-3.5 px-4 text-center">PLACE PTS</th>
+                <th class="py-3.5 px-4 text-center">KILL PTS</th>
+                <th class="py-3.5 px-4 text-center">TOTAL PTS</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-800/60 font-tech text-xs">
+              ${standings.map(s => {
+                let rankBadge = `<span class="font-tech font-bold text-slate-400">#${s.rank}</span>`;
+                let rowClass = "leaderboard-row";
 
-              if (s.rank === 1) {
-                rankBadge = `<span class="w-6 h-6 rounded-full bg-amber-400 text-black font-tech font-extrabold inline-flex items-center justify-center">1</span>`;
-                rowClass += " rank-1";
-              } else if (s.rank === 2) {
-                rankBadge = `<span class="w-6 h-6 rounded-full bg-slate-300 text-black font-tech font-extrabold inline-flex items-center justify-center">2</span>`;
-                rowClass += " rank-2";
-              } else if (s.rank === 3) {
-                rankBadge = `<span class="w-6 h-6 rounded-full bg-amber-700 text-white font-tech font-extrabold inline-flex items-center justify-center">3</span>`;
-                rowClass += " rank-3";
-              }
+                if (s.rank === 1) {
+                  rankBadge = `<span class="w-6 h-6 rounded-full bg-amber-400 text-black font-tech font-extrabold inline-flex items-center justify-center">1</span>`;
+                  rowClass += " rank-1";
+                } else if (s.rank === 2) {
+                  rankBadge = `<span class="w-6 h-6 rounded-full bg-slate-300 text-black font-tech font-extrabold inline-flex items-center justify-center">2</span>`;
+                  rowClass += " rank-2";
+                } else if (s.rank === 3) {
+                  rankBadge = `<span class="w-6 h-6 rounded-full bg-amber-700 text-white font-tech font-extrabold inline-flex items-center justify-center">3</span>`;
+                  rowClass += " rank-3";
+                }
 
-              return `
-                <tr class="${rowClass}">
-                  <td class="py-3 px-4 text-center">${rankBadge}</td>
-                  <td class="py-3 px-4 font-heading font-bold text-slate-100 text-sm">
-                    ${s.team}
-                  </td>
-                  <td class="py-3 px-4 text-center text-slate-300">${s.matches}</td>
-                  <td class="py-3 px-4 text-center text-amber-400 font-bold">${s.booyahs || 0}</td>
-                  <td class="py-3 px-4 text-center text-slate-300">${s.placePts}</td>
-                  <td class="py-3 px-4 text-center text-slate-300">${s.killPts}</td>
-                  <td class="py-3 px-4 text-center font-extrabold text-amber-400 text-sm bg-slate-900/30">${s.totalPts}</td>
-                </tr>
-              `;
-            }).join('')}
-          </tbody>
-        </table>
+                return `
+                  <tr class="${rowClass}">
+                    <td class="py-3 px-4 text-center">${rankBadge}</td>
+                    <td class="py-3 px-4 font-heading font-bold text-slate-100 text-sm">
+                      ${s.team}
+                    </td>
+                    <td class="py-3 px-4 text-center text-slate-300">${s.matches}</td>
+                    <td class="py-3 px-4 text-center text-amber-400 font-bold">${s.booyahs || 0}</td>
+                    <td class="py-3 px-4 text-center text-slate-300">${s.placePts}</td>
+                    <td class="py-3 px-4 text-center text-slate-300">${s.killPts}</td>
+                    <td class="py-3 px-4 text-center font-extrabold text-amber-400 text-sm bg-slate-900/30">${s.totalPts}</td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
       </div>
-    </div>
+    ` : ''}
   `;
 }
 
@@ -2188,33 +2257,74 @@ function renderAdminPortal() {
           <i class="fa-solid fa-trophy text-amber-400 mr-2"></i> Post-Match Points Table Upload
         </h3>
         <p class="text-xs text-slate-400 mb-6 font-normal">
-          Upload points table after today's 12-squad matches conclude.
+          Upload the points table graphic/image or enter standings after today's 12-squad matches conclude.
         </p>
 
         <form id="admin-points-form" class="space-y-4">
           <div>
             <label class="block text-xs font-tech text-slate-400 uppercase mb-1">Tournament Edition Title</label>
-            <input type="text" id="admin-points-season" placeholder="e.g. FREE FIRE WEEKLY WARS - SEASON 12" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white text-xs font-tech focus:border-amber-400 focus:outline-none">
+            <input type="text" id="admin-points-season" placeholder="e.g. FREE FIRE WEEKLY WARS - SEASON 12 FINALS" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white text-xs font-tech focus:border-amber-400 focus:outline-none">
+          </div>
+
+          <!-- POINTS TABLE IMAGE UPLOAD SECTION -->
+          <div class="p-4 rounded-xl border-2 border-dashed border-amber-500/40 bg-slate-950/70 hover:border-amber-400 transition-colors" id="admin-points-dropzone">
+            <div class="flex items-center justify-between mb-1.5">
+              <label class="block text-xs font-tech text-amber-400 uppercase font-bold">
+                <i class="fa-solid fa-image mr-1.5"></i> Upload Points Table Image
+              </label>
+              <span class="text-[10px] font-tech text-slate-400 uppercase">PNG, JPG, WEBP</span>
+            </div>
+            <p class="text-xs text-slate-400 mb-3 font-normal">
+              Select or drop your points table image graphic. It will be published live in high definition on the official Points Table page!
+            </p>
+
+            <div class="flex flex-wrap items-center gap-3">
+              <label for="admin-points-image-input" class="cursor-pointer btn-esports-primary px-4 py-2.5 rounded-lg text-xs font-heading font-bold uppercase inline-flex items-center gap-2">
+                <i class="fa-solid fa-cloud-arrow-up text-sm"></i> Choose Image File
+                <input type="file" id="admin-points-image-input" accept="image/*" class="hidden">
+              </label>
+              <button type="button" id="admin-points-image-clear-btn" class="hidden btn-esports-secondary px-3.5 py-2 rounded-lg text-xs font-tech text-red-400 font-bold uppercase inline-flex items-center gap-1.5">
+                <i class="fa-solid fa-trash-can"></i> Remove Image
+              </button>
+              <span id="admin-points-image-status" class="text-xs font-tech text-slate-400">No image selected</span>
+            </div>
+
+            <!-- Image Preview Box -->
+            <div id="admin-points-image-preview-container" class="hidden mt-4 pt-3 border-t border-slate-800">
+              <div class="text-[11px] font-tech text-slate-400 mb-2 flex items-center justify-between">
+                <span><i class="fa-solid fa-eye text-amber-400 mr-1"></i> Image Preview:</span>
+                <span id="admin-points-image-dimensions" class="text-amber-400 font-bold"></span>
+              </div>
+              <div class="rounded-lg overflow-hidden border border-amber-500/30 bg-black/80 max-h-80 flex items-center justify-center p-2">
+                <img id="admin-points-image-preview" src="" alt="Points Table Preview" class="max-h-72 w-auto object-contain rounded shadow-lg">
+              </div>
+            </div>
+          </div>
+
+          <div class="pt-1">
+            <span class="text-xs font-tech text-slate-400 uppercase font-bold block mb-2">
+              <i class="fa-solid fa-star text-amber-400 mr-1"></i> Optional MVP & Additional Details
+            </span>
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label class="block text-xs font-tech text-slate-400 uppercase mb-1">MVP Player IGN</label>
+              <label class="block text-xs font-tech text-slate-400 uppercase mb-1">MVP Player IGN (Optional)</label>
               <input type="text" id="admin-points-mvp-ign" placeholder="e.g. IP・THUNDER" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white text-xs font-tech focus:border-amber-400 focus:outline-none">
             </div>
             <div>
-              <label class="block text-xs font-tech text-slate-400 uppercase mb-1">MVP Team Name</label>
+              <label class="block text-xs font-tech text-slate-400 uppercase mb-1">MVP Team Name (Optional)</label>
               <input type="text" id="admin-points-mvp-team" placeholder="e.g. TOTAL DOMINANCE" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white text-xs font-tech focus:border-amber-400 focus:outline-none">
             </div>
           </div>
 
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="block text-xs font-tech text-slate-400 uppercase mb-1">MVP Total Kills</label>
+              <label class="block text-xs font-tech text-slate-400 uppercase mb-1">MVP Total Kills (Optional)</label>
               <input type="number" id="admin-points-mvp-kills" placeholder="e.g. 24" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white text-xs font-tech focus:border-amber-400 focus:outline-none">
             </div>
             <div>
-              <label class="block text-xs font-tech text-slate-400 uppercase mb-1">MVP Total Damage</label>
+              <label class="block text-xs font-tech text-slate-400 uppercase mb-1">MVP Total Damage (Optional)</label>
               <input type="text" id="admin-points-mvp-damage" placeholder="e.g. 4,850" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white text-xs font-tech focus:border-amber-400 focus:outline-none">
             </div>
           </div>
@@ -2222,16 +2332,21 @@ function renderAdminPortal() {
           <div>
             <div class="flex justify-between items-center mb-1">
               <label class="block text-xs font-tech text-slate-400 uppercase">
-                Squad Standings Data (Paste CSV Format)
+                Squad Standings Data (Optional CSV Format)
               </label>
               <span class="text-[10px] text-amber-400 font-tech">Format: TeamName, Matches, Booyahs, PlacePts, KillPts, TotalPts</span>
             </div>
-            <textarea id="admin-points-raw-data" rows="6" placeholder="TOTAL DOMINANCE, 4, 2, 28, 36, 64&#10;GODLIKE SQUAD, 4, 1, 22, 30, 52&#10;SOUL ESPORTS, 4, 1, 18, 28, 46&#10;RECKONING WARRIORS, 4, 0, 14, 24, 38" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white text-xs font-mono focus:border-amber-400 focus:outline-none"></textarea>
+            <textarea id="admin-points-raw-data" rows="4" placeholder="Optional if image is uploaded above. E.g.:&#10;TOTAL DOMINANCE, 4, 2, 28, 36, 64&#10;GODLIKE SQUAD, 4, 1, 22, 30, 52" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white text-xs font-mono focus:border-amber-400 focus:outline-none"></textarea>
           </div>
 
-          <button type="submit" class="btn-esports-primary py-3 px-6 rounded-lg font-heading font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2">
-            <i class="fa-solid fa-cloud-arrow-up"></i> Publish Points Table Live
-          </button>
+          <div class="flex flex-wrap items-center gap-3 pt-1">
+            <button type="submit" class="btn-esports-primary py-3 px-6 rounded-lg font-heading font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2">
+              <i class="fa-solid fa-cloud-arrow-up"></i> Publish Points Table Live
+            </button>
+            <button type="button" id="admin-points-clear-live-btn" class="btn-esports-secondary py-3 px-5 rounded-lg font-heading font-bold text-xs uppercase tracking-wider text-red-400 hover:text-white hover:bg-red-600/30 border border-red-500/40 flex items-center justify-center gap-2">
+              <i class="fa-solid fa-trash-can"></i> Remove / Reset Live Points Table
+            </button>
+          </div>
         </form>
       </div>
 
@@ -2301,14 +2416,174 @@ function attachAdminFormListeners() {
   }
 
   if (pointsForm) {
+    let uploadedPointsTableImage = "";
+    const savedStandings = JSON.parse(localStorage.getItem(STANDINGS_STORAGE_KEY) || 'null');
+    const imageInput = document.getElementById('admin-points-image-input');
+    const previewContainer = document.getElementById('admin-points-image-preview-container');
+    const previewImg = document.getElementById('admin-points-image-preview');
+    const statusText = document.getElementById('admin-points-image-status');
+    const clearBtn = document.getElementById('admin-points-image-clear-btn');
+    const dimText = document.getElementById('admin-points-image-dimensions');
+    const dropzone = document.getElementById('admin-points-dropzone');
+    const seasonInput = document.getElementById('admin-points-season');
+    const ignInput = document.getElementById('admin-points-mvp-ign');
+    const teamInput = document.getElementById('admin-points-mvp-team');
+    const killsInput = document.getElementById('admin-points-mvp-kills');
+    const damageInput = document.getElementById('admin-points-mvp-damage');
+
+    // Prepopulate existing data if present
+    if (savedStandings) {
+      if (seasonInput && savedStandings.season) seasonInput.value = savedStandings.season;
+      if (savedStandings.mvp) {
+        if (ignInput) ignInput.value = savedStandings.mvp.ign || savedStandings.mvp.name || '';
+        if (teamInput) teamInput.value = savedStandings.mvp.team || '';
+        if (killsInput) killsInput.value = savedStandings.mvp.kills || '';
+        if (damageInput) damageInput.value = savedStandings.mvp.damage || '';
+      }
+      if (savedStandings.imageUrl) {
+        uploadedPointsTableImage = savedStandings.imageUrl;
+        if (previewImg) previewImg.src = uploadedPointsTableImage;
+        if (previewContainer) previewContainer.classList.remove('hidden');
+        if (clearBtn) clearBtn.classList.remove('hidden');
+        if (statusText) statusText.innerHTML = `<span class="text-amber-400 font-bold"><i class="fa-solid fa-image"></i> Current Live Image</span>`;
+        if (previewImg) {
+          previewImg.onload = () => {
+            if (dimText) dimText.textContent = `${previewImg.naturalWidth} x ${previewImg.naturalHeight}px`;
+          };
+        }
+      }
+    }
+
+    function handleImageFile(file) {
+      if (!file) return;
+      if (!file.type.startsWith('image/')) {
+        showToast('Please select a valid image file (PNG, JPG, WEBP)!', 'error');
+        return;
+      }
+      if (file.size > 25 * 1024 * 1024) {
+        showToast('Image size exceeds 25MB limit. Please choose a smaller file.', 'error');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (evt) => {
+        uploadedPointsTableImage = evt.target.result;
+        if (previewImg) previewImg.src = uploadedPointsTableImage;
+        if (previewContainer) previewContainer.classList.remove('hidden');
+        if (clearBtn) clearBtn.classList.remove('hidden');
+        if (statusText) statusText.innerHTML = `<span class="text-emerald-400 font-bold"><i class="fa-solid fa-circle-check"></i> ${file.name}</span>`;
+        if (previewImg) {
+          previewImg.onload = () => {
+            if (dimText) dimText.textContent = `${previewImg.naturalWidth} x ${previewImg.naturalHeight}px`;
+          };
+        }
+        showToast('Points table image loaded successfully!', 'success');
+      };
+      reader.readAsDataURL(file);
+    }
+
+    if (imageInput) {
+      imageInput.addEventListener('change', (e) => {
+        const file = e.target.files && e.target.files[0];
+        handleImageFile(file);
+      });
+    }
+
+    if (dropzone) {
+      ['dragenter', 'dragover'].forEach(eventName => {
+        dropzone.addEventListener(eventName, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          dropzone.classList.add('border-amber-400', 'bg-slate-900/90');
+        }, false);
+      });
+      ['dragleave', 'drop'].forEach(eventName => {
+        dropzone.addEventListener(eventName, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          dropzone.classList.remove('border-amber-400', 'bg-slate-900/90');
+        }, false);
+      });
+      dropzone.addEventListener('drop', (e) => {
+        const dt = e.dataTransfer;
+        const file = dt && dt.files && dt.files[0];
+        handleImageFile(file);
+      }, false);
+    }
+
+    async function clearAndUnpublishPointsTable() {
+      uploadedPointsTableImage = "";
+      if (imageInput) imageInput.value = "";
+      if (previewContainer) previewContainer.classList.add('hidden');
+      if (clearBtn) clearBtn.classList.add('hidden');
+      if (statusText) statusText.textContent = "No image selected";
+      if (seasonInput) seasonInput.value = "";
+      if (ignInput) ignInput.value = "";
+      if (teamInput) teamInput.value = "";
+      if (killsInput) killsInput.value = "";
+      if (damageInput) damageInput.value = "";
+      const rawEl = document.getElementById('admin-points-raw-data');
+      if (rawEl) rawEl.value = "";
+
+      const user = getCurrentUser();
+      const cleared = {
+        season: 'FREE FIRE WEEKLY WARS - SEASON 12 FINALS',
+        isPublished: false,
+        imageUrl: null,
+        mvp: null,
+        standings: [],
+        adminEmail: user?.email || 'akshithreddypalvai2005@gmail.com'
+      };
+
+      try {
+        await fetch(`${API_BASE}/admin/leaderboard`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Admin-Email': user?.email || 'akshithreddypalvai2005@gmail.com'
+          },
+          body: JSON.stringify(cleared)
+        });
+      } catch (err) {}
+
+      localStorage.setItem(STANDINGS_STORAGE_KEY, JSON.stringify(cleared));
+      renderLeaderboard();
+      showToast('Points Table removed! Live table has been reset.', 'info');
+    }
+
+    const clearLiveBtn = document.getElementById('admin-points-clear-live-btn');
+    if (clearLiveBtn) {
+      clearLiveBtn.addEventListener('click', async () => {
+        await clearAndUnpublishPointsTable();
+      });
+    }
+
+    if (clearBtn) {
+      clearBtn.addEventListener('click', async () => {
+        uploadedPointsTableImage = "";
+        if (imageInput) imageInput.value = "";
+        if (previewContainer) previewContainer.classList.add('hidden');
+        if (clearBtn) clearBtn.classList.add('hidden');
+        if (statusText) statusText.textContent = "No image selected";
+
+        // Immediately update live table if an image was currently published
+        const cur = JSON.parse(localStorage.getItem(STANDINGS_STORAGE_KEY) || 'null');
+        if (cur && cur.imageUrl) {
+          await clearAndUnpublishPointsTable();
+        } else {
+          showToast('Image removed from form', 'info');
+        }
+      });
+    }
+
     pointsForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const season = document.getElementById('admin-points-season').value.trim() || 'FREE FIRE WEEKLY WARS - SEASON 12 FINALS';
-      const ign = document.getElementById('admin-points-mvp-ign').value.trim();
-      const team = document.getElementById('admin-points-mvp-team').value.trim();
-      const kills = document.getElementById('admin-points-mvp-kills').value.trim();
-      const damage = document.getElementById('admin-points-mvp-damage').value.trim();
-      const raw = document.getElementById('admin-points-raw-data').value.trim();
+      const season = (seasonInput && seasonInput.value.trim()) || 'FREE FIRE WEEKLY WARS - SEASON 12 FINALS';
+      const ign = ignInput ? ignInput.value.trim() : '';
+      const team = teamInput ? teamInput.value.trim() : '';
+      const kills = killsInput ? killsInput.value.trim() : '';
+      const damage = damageInput ? damageInput.value.trim() : '';
+      const raw = document.getElementById('admin-points-raw-data')?.value.trim() || '';
 
       const user = getCurrentUser();
 
@@ -2331,9 +2606,15 @@ function attachAdminFormListeners() {
         });
       }
 
+      if (!uploadedPointsTableImage && standings.length === 0) {
+        await clearAndUnpublishPointsTable();
+        return;
+      }
+
       const published = {
         season,
         isPublished: true,
+        imageUrl: uploadedPointsTableImage || null,
         mvp: ign ? { ign, name: ign, team, kills, damage, matches: 4, rating: '9.8' } : null,
         standings,
         adminEmail: user?.email || 'akshithreddypalvai2005@gmail.com'

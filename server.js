@@ -16,8 +16,8 @@ const ADMIN_PIN = process.env.ADMIN_PIN || 'IP2026';
 
 // Middlewares
 app.use(cors({ origin: '*' }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Serve static frontend assets
 app.use(express.static(path.join(__dirname)));
@@ -671,13 +671,14 @@ app.get('/api/leaderboard', (req, res) => {
 
 // Admin Update Leaderboard
 app.post('/api/admin/leaderboard', requireAdminAuth, (req, res) => {
-  const { season, mvp, standings, isPublished } = req.body;
+  const { season, mvp, standings, isPublished, imageUrl } = req.body;
   const db = getDatabase();
 
   db.leaderboard = {
     season: season || 'FREE FIRE WEEKLY WARS - SEASON 12 FINALS',
     isPublished: isPublished !== false,
     mvp: mvp || null,
+    imageUrl: imageUrl || null,
     standings: Array.isArray(standings) ? standings : []
   };
 
