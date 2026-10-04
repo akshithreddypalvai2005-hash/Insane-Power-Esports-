@@ -1,4 +1,4 @@
-/**
+﻿/**
  * INSANE POWER ESPORTS - FREE FIRE WEEKLY WARS 48-SLOT & IDP SYSTEM DATA
  */
 
@@ -16,7 +16,7 @@ const IP_DATA = {
     twitter: "https://twitter.com/IPEsportsIN",
     stats: {
       warsHosted: "48+",
-      prizeDistributed: "₹6,50,000+",
+      prizeDistributed: "â‚¹6,50,000+",
       registeredSquads: "1,400+",
       weeklyActiveGamers: "10,000+"
     }
@@ -27,7 +27,7 @@ const IP_DATA = {
     {
       username: "thunder_igl",
       name: "Sameer Sheikh",
-      ign: "IP・THUNDER",
+      ign: "IPãƒ»THUNDER",
       uid: "1948201948",
       phone: "+91 98765 43210",
       role: "Captain / IGL",
@@ -36,7 +36,7 @@ const IP_DATA = {
     {
       username: "viper_sniper",
       name: "Aditya Nair",
-      ign: "IP・VIPER",
+      ign: "IPãƒ»VIPER",
       uid: "2048192847",
       phone: "+91 98765 43211",
       role: "Sniper",
@@ -45,7 +45,7 @@ const IP_DATA = {
     {
       username: "blaze_rusher",
       name: "Rohan Varma",
-      ign: "IP・BLAZE",
+      ign: "IPãƒ»BLAZE",
       uid: "1829471928",
       phone: "+91 98765 43212",
       role: "Entry Rusher",
@@ -54,7 +54,7 @@ const IP_DATA = {
     {
       username: "shadow_ff",
       name: "Dev Singhania",
-      ign: "IP・SHADOW",
+      ign: "IPãƒ»SHADOW",
       uid: "2291847192",
       phone: "+91 98765 43213",
       role: "Support / Cover",
@@ -63,7 +63,7 @@ const IP_DATA = {
     {
       username: "cyborg_sub",
       name: "Kabir Khan",
-      ign: "IP・CYBORG",
+      ign: "IPãƒ»CYBORG",
       uid: "2819472910",
       phone: "+91 98765 43214",
       role: "Substitute",
@@ -80,7 +80,7 @@ const IP_DATA = {
       category: "weekly_wars",
       mode: "Squad (Battle Royale)",
       map: "Bermuda, Purgatory, Kalahari, Alpine (4 Matches / Day)",
-      prizePool: "₹1,000",
+      prizePool: "â‚¹1,000",
       entryFee: "100% FREE",
       totalSlots: 48, // 48 Slots total
       slotsPerGroup: 12, // 12 squads per group/day
@@ -98,9 +98,9 @@ const IP_DATA = {
         { group: "Group D (Day 4)", slots: "Slots 37 - 48", day: "Sunday @ 6:00 PM IST", status: "Upcoming" }
       ],
       prizeBreakdown: [
-        { rank: "1st Place (Champions)", prize: "₹600 + Slot Verification" },
-        { rank: "2nd Place (Runner-Up)", prize: "₹300" },
-        { rank: "Tournament MVP", prize: "₹100" }
+        { rank: "1st Place (Champions)", prize: "â‚¹600 + Slot Verification" },
+        { rank: "2nd Place (Runner-Up)", prize: "â‚¹300" },
+        { rank: "Tournament MVP", prize: "â‚¹100" }
       ],
       pointSystem: [
         { place: "1st (Booyah)", pts: 12 },
@@ -149,7 +149,7 @@ const IP_DATA = {
   faqs: [
     {
       q: "How are the 48 slots divided across the 4 match days?",
-      a: "As squads register in order: Slots 1–12 are assigned to Day 1 (Group A), Slots 13–24 to Day 2 (Group B), Slots 25–36 to Day 3 (Group C), and Slots 37–48 to Day 4 (Group D)."
+      a: "As squads register in order: Slots 1â€“12 are assigned to Day 1 (Group A), Slots 13â€“24 to Day 2 (Group B), Slots 25â€“36 to Day 3 (Group C), and Slots 37â€“48 to Day 4 (Group D)."
     },
     {
       q: "Who gets access to the Room ID & Password (IDP)?",
@@ -173,3 +173,4 @@ const CURRENT_USER_SESSION_KEY = "IP_FF_CURRENT_USER_SESSION_V3";
 const REGISTRATION_STORAGE_KEY = "IP_FF_WEEKLY_WARS_REGISTRATIONS_V3";
 const IDP_SETTINGS_STORAGE_KEY = "IP_FF_IDP_SETTINGS_V3";
 const STANDINGS_STORAGE_KEY = "IP_FF_WEEKLY_WARS_STANDINGS_V3";
+

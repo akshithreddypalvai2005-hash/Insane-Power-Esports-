@@ -1,4 +1,4 @@
-/**
+﻿/**
  * INSANE POWER ESPORTS - FREE FIRE WEEKLY WARS MASTER APP
  * 48-Slot (4 Groups x 12 Squads) Line-Wise Allocation & Day-Specific IDP Security System
  * Google Sign-In + REST API Hybrid Client
@@ -14,6 +14,14 @@ let _publicSquads = null;
 let _publicMatchState = null;
 let _arenaConnection = 'loading';
 let _authorizedAdminEmails = ['akshithreddypalvai2005@gmail.com'];
+let _motionObserver = null;
+let _motionInitialized = false;
+const _motionSeen = new WeakSet();
+const _motionPending = new Set();
+const _visibilityMotion = new WeakMap();
+const _reducedMotion = window.matchMedia
+  ? window.matchMedia('(prefers-reduced-motion: reduce)')
+  : { matches: false };
 
 document.addEventListener('DOMContentLoaded', async () => {
   initSeedData();
@@ -23,6 +31,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   initAuthSystem();
   initGoogleAuth();
   setupModals();
+  initScrollEffects();
   // Sync tournament data and admin emails from server before first render
   await syncFromServer();
   await syncCurrentSquad();
@@ -33,8 +42,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   renderLeaderboard();
   renderFaqs();
   renderAdminPortal();
-  setupCard3DTilt();
-  initScrollEffects();
+  refreshMotion();
 });
 
 // Sync authoritative data from server API
@@ -185,17 +193,17 @@ function showToast(message, type = 'success') {
   toast.className = 'toast-msg';
   
   const icon = type === 'success' 
-    ? '<i class="fa-solid fa-circle-check text-amber-400 text-lg"></i>' 
+    ? '<i class="fa-solid fa-circle-check text-[#3D48A8] text-lg"></i>' 
     : type === 'error' 
     ? '<i class="fa-solid fa-triangle-exclamation text-red-500 text-lg"></i>' 
-    : '<i class="fa-solid fa-circle-info text-cyan-400 text-lg"></i>';
+    : '<i class="fa-solid fa-circle-info text-[#3D48A8] text-lg"></i>';
 
   toast.innerHTML = `
     ${icon}
     <div class="flex-1 text-xs font-heading font-medium tracking-wide">
       <p class="text-slate-100">${message}</p>
     </div>
-    <button class="text-slate-400 hover:text-white" onclick="this.parentElement.remove()">
+    <button class="text-white/50 hover:text-white" onclick="this.parentElement.remove()">
       <i class="fa-solid fa-xmark"></i>
     </button>
   `;
@@ -221,19 +229,19 @@ function initAuthSystem() {
 
   if (tabLogin && tabSignup) {
     tabLogin.addEventListener('click', () => {
-      tabLogin.classList.add('bg-amber-500', 'text-black');
-      tabLogin.classList.remove('text-slate-400');
-      tabSignup.classList.remove('bg-amber-500', 'text-black');
-      tabSignup.classList.add('text-slate-400');
+      tabLogin.classList.add('bg-[#2C3480]', 'text-white');
+      tabLogin.classList.remove('text-white/50');
+      tabSignup.classList.remove('bg-[#2C3480]', 'text-white');
+      tabSignup.classList.add('text-white/50');
       loginPane.classList.remove('hidden');
       signupPane.classList.add('hidden');
     });
 
     tabSignup.addEventListener('click', () => {
-      tabSignup.classList.add('bg-amber-500', 'text-black');
-      tabSignup.classList.remove('text-slate-400');
-      tabLogin.classList.remove('bg-amber-500', 'text-black');
-      tabLogin.classList.add('text-slate-400');
+      tabSignup.classList.add('bg-[#2C3480]', 'text-white');
+      tabSignup.classList.remove('text-white/50');
+      tabLogin.classList.remove('bg-[#2C3480]', 'text-white');
+      tabLogin.classList.add('text-white/50');
       signupPane.classList.remove('hidden');
       loginPane.classList.add('hidden');
     });
@@ -453,7 +461,7 @@ function initGoogleAuth() {
       firebaseAuth = firebase.auth();
       googleAuthProvider = new firebase.auth.GoogleAuthProvider();
       googleAuthProvider.setCustomParameters({ prompt: 'select_account' });
-      console.log('⚡ Firebase Auth initialized successfully for Insane Power Esports');
+      console.log('âš¡ Firebase Auth initialized successfully for Insane Power Esports');
     }
   } catch (err) {
     console.error('Firebase Auth init error:', err);
@@ -569,7 +577,7 @@ async function handleGoogleUserPayload(googleUser) {
       username: email.split('@')[0],
       name: googleUser.name || 'Akshith Reddy',
       email: email,
-      ign: 'IP・ADMIN',
+      ign: 'IPãƒ»ADMIN',
       uid: '1000000001',
       phone: '+91 98765 00000',
       authProvider: 'google',
@@ -592,14 +600,47 @@ async function handleGoogleUserPayload(googleUser) {
   openGoogleProfileModal();
 }
 
+// Cancel stale frames/timeouts so rapid open/close/reopen never leaves an invisible overlay.
+function setMotionVisibility(element, open) {
+  if (!element) return;
+  const previous = _visibilityMotion.get(element);
+  if (previous) {
+    cancelAnimationFrame(previous.frame);
+    clearTimeout(previous.timer);
+  }
+  const state = { frame: 0, timer: 0, open };
+  _visibilityMotion.set(element, state);
+  element.inert = !open;
+  if (open) {
+    element.classList.remove('hidden');
+    if (_reducedMotion.matches) {
+      element.classList.add('is-open');
+    } else {
+      state.frame = requestAnimationFrame(() => {
+        state.frame = requestAnimationFrame(() => element.classList.add('is-open'));
+      });
+    }
+  } else {
+    element.classList.remove('is-open');
+    if (_reducedMotion.matches) element.classList.add('hidden');
+    else state.timer = setTimeout(() => element.classList.add('hidden'), 240);
+  }
+}
+
+function openMotionModal(modal) {
+  setMotionVisibility(modal, true);
+}
+
+function closeMotionModal(modal) {
+  setMotionVisibility(modal, false);
+}
+
 function openGoogleProfileModal() {
-  const modal = document.getElementById('google-profile-modal');
-  if (modal) modal.classList.remove('hidden');
+  openMotionModal(document.getElementById('google-profile-modal'));
 }
 
 function closeGoogleProfileModal() {
-  const modal = document.getElementById('google-profile-modal');
-  if (modal) modal.classList.add('hidden');
+  closeMotionModal(document.getElementById('google-profile-modal'));
   pendingGoogleUser = null;
 }
 
@@ -608,24 +649,24 @@ function updateAuthUI() {
   const authBtnContainer = document.getElementById('header-auth-container');
   const mobileAuthContainer = document.getElementById('mobile-auth-container');
   const adminBadge = isCurrentUserAdmin()
-    ? `<span class="bg-red-500/20 text-red-400 border border-red-500/40 text-[9px] font-tech font-bold px-1.5 py-0.5 rounded ml-1">ADMIN</span>`
+    ? `<span class="bg-white/08 text-red-400 border border-white/15 text-[9px] font-tech font-bold px-1.5 py-0.5 rounded ml-1">ADMIN</span>`
     : '';
 
   if (authBtnContainer) {
     if (user) {
       authBtnContainer.innerHTML = `
         <div class="flex items-center gap-2">
-          <div class="px-3 py-1.5 bg-slate-900 border border-amber-500/30 rounded-lg flex items-center gap-2 shadow-sm">
-            <span class="w-2 h-2 rounded-full ${isCurrentUserAdmin() ? 'bg-amber-400 animate-pulse' : 'bg-emerald-400'}"></span>
+          <div class="px-3 py-1.5 bg-[#060810] border border-[#2C3480]/40 rounded-lg flex items-center gap-2 shadow-sm">
+            <span class="w-2 h-2 rounded-full ${isCurrentUserAdmin() ? 'bg-[#3D48A8] animate-pulse' : 'bg-[#2C3480]'}"></span>
             <div class="text-left">
               <div class="flex items-center">
-                <span class="text-xs font-tech font-bold text-amber-400 leading-tight">@${user.username}</span>
+                <span class="text-xs font-tech font-bold text-[#3D48A8] leading-tight">@${user.username}</span>
                 ${adminBadge}
               </div>
-              <span class="text-[11px] text-slate-300 font-heading block leading-none font-semibold">${user.ign || user.name}</span>
+              <span class="text-[11px] text-white/70 font-heading block leading-none font-semibold">${user.ign || user.name}</span>
             </div>
           </div>
-          <button onclick="logoutUser()" class="text-slate-400 hover:text-red-400 text-xs font-tech px-2.5 py-2 border border-slate-800 rounded-lg bg-slate-900/80" title="Logout">
+          <button onclick="logoutUser()" class="text-white/50 hover:text-red-400 text-xs font-tech px-2.5 py-2 border border-white/10 rounded-lg bg-[#060810]/90" title="Logout">
             <i class="fa-solid fa-right-from-bracket"></i>
           </button>
         </div>
@@ -633,7 +674,7 @@ function updateAuthUI() {
     } else {
       authBtnContainer.innerHTML = `
         <button onclick="openAuthModal()" class="btn-esports-secondary px-3.5 py-2 rounded-lg text-xs font-heading font-bold flex items-center gap-2">
-          <i class="fa-solid fa-user-plus text-amber-400"></i> Player Login / Sign Up
+          <i class="fa-solid fa-user-plus text-[#3D48A8]"></i> Player Login / Sign Up
         </button>
       `;
     }
@@ -642,10 +683,10 @@ function updateAuthUI() {
   if (mobileAuthContainer) {
     if (user) {
       mobileAuthContainer.innerHTML = `
-        <div class="flex justify-between items-center bg-slate-900 p-3 rounded-lg border border-amber-500/30">
+        <div class="flex justify-between items-center bg-[#060810] p-3 rounded-lg border border-[#2C3480]/40">
           <div>
-            <span class="text-xs font-tech font-bold text-amber-400 block">Logged in: @${user.username}</span>
-            <span class="text-[11px] text-slate-300 block font-heading font-semibold">${user.ign} (UID: ${user.uid})</span>
+            <span class="text-xs font-tech font-bold text-[#3D48A8] block">Logged in: @${user.username}</span>
+            <span class="text-[11px] text-white/70 block font-heading font-semibold">${user.ign} (UID: ${user.uid})</span>
           </div>
           <button onclick="logoutUser()" class="btn-esports-secondary px-3 py-1 rounded text-xs font-tech text-red-400 font-bold">
             Logout
@@ -705,13 +746,11 @@ function updateAuthUI() {
 }
 
 function openAuthModal() {
-  const modal = document.getElementById('auth-modal');
-  if (modal) modal.classList.remove('hidden');
+  openMotionModal(document.getElementById('auth-modal'));
 }
 
 function closeAuthModal() {
-  const modal = document.getElementById('auth-modal');
-  if (modal) modal.classList.add('hidden');
+  closeMotionModal(document.getElementById('auth-modal'));
 }
 
 function logoutUser() {
@@ -726,49 +765,85 @@ function initNavigation() {
   const mobileMenuBtn = document.getElementById('mobile-menu-btn');
   const mobileMenu = document.getElementById('mobile-menu');
 
+  function setMobileMenu(open) {
+    setMotionVisibility(mobileMenu, open);
+    mobileMenuBtn?.setAttribute('aria-expanded', String(open));
+    mobileMenuBtn?.setAttribute('aria-label', open ? 'Close navigation' : 'Open navigation');
+    const menuIcon = mobileMenuBtn?.querySelector('i');
+    menuIcon?.classList.toggle('fa-xmark', open);
+    menuIcon?.classList.toggle('fa-bars-staggered', !open);
+  }
+
   if (mobileMenuBtn && mobileMenu) {
     mobileMenuBtn.addEventListener('click', () => {
-      const isOpen = mobileMenu.classList.toggle('hidden') === false;
-      mobileMenuBtn.setAttribute('aria-expanded', String(isOpen));
-      mobileMenuBtn.querySelector('i')?.classList.toggle('fa-xmark', isOpen);
-      mobileMenuBtn.querySelector('i')?.classList.toggle('fa-bars-staggered', !isOpen);
+      setMobileMenu(mobileMenuBtn.getAttribute('aria-expanded') !== 'true');
     });
   }
 
-  function navigateTo(route) {
+  // One indicator slides between the existing links; it never intercepts navigation.
+  const desktopNav = document.querySelector('.desktop-nav');
+  const indicator = document.createElement('span');
+  indicator.className = 'nav-active-indicator';
+  indicator.setAttribute('aria-hidden', 'true');
+  desktopNav?.appendChild(indicator);
+  let indicatorFrame = 0;
+  const updateIndicator = () => {
+    cancelAnimationFrame(indicatorFrame);
+    indicatorFrame = requestAnimationFrame(() => {
+      const active = desktopNav?.querySelector('.nav-link.active:not(.hidden)');
+      if (!active || !desktopNav.getClientRects().length) {
+        indicator.style.opacity = '0';
+        return;
+      }
+      const linkRect = active.getBoundingClientRect();
+      const navRect = desktopNav.getBoundingClientRect();
+      indicator.style.transform = `translateX(${linkRect.left - navRect.left + linkRect.width * .2}px) scaleX(${linkRect.width * .6})`;
+      indicator.style.opacity = '1';
+      desktopNav.classList.add('motion-nav-ready');
+    });
+  };
+  if ('ResizeObserver' in window && desktopNav) {
+    new ResizeObserver(updateIndicator).observe(desktopNav);
+  } else {
+    window.addEventListener('resize', updateIndicator, { passive: true });
+  }
+  document.fonts?.ready.then(updateIndicator);
+
+  function navigateTo(route, scrollTarget = '') {
     sections.forEach(sec => {
       if (sec.id === `view-${route}`) {
         sec.classList.remove('hidden');
+        sec.classList.add('route-enter');
       } else {
         sec.classList.add('hidden');
+        sec.classList.remove('route-enter');
       }
     });
 
     links.forEach(l => {
-      if (l.dataset.route === route) {
+      if (l.dataset.route === route && (l.dataset.scrollTarget || '') === scrollTarget) {
         l.classList.add('active');
       } else {
         l.classList.remove('active');
       }
     });
 
-    if (mobileMenu && !mobileMenu.classList.contains('hidden')) {
-      mobileMenu.classList.add('hidden');
-      mobileMenuBtn?.setAttribute('aria-expanded', 'false');
-      const menuIcon = mobileMenuBtn?.querySelector('i');
-      menuIcon?.classList.remove('fa-xmark');
-      menuIcon?.classList.add('fa-bars-staggered');
+    if (mobileMenu && (!mobileMenu.classList.contains('hidden') || mobileMenu.classList.contains('is-open'))) {
+      setMobileMenu(false);
     }
 
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    const scrollTarget = document.querySelector(`[data-route="${route}"][data-scroll-target]`)?.dataset.scrollTarget;
+    const behavior = _reducedMotion.matches ? 'auto' : 'smooth';
     if (route === 'home' && scrollTarget) {
-      window.setTimeout(() => document.getElementById(scrollTarget)?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 120);
+      document.getElementById(scrollTarget)?.scrollIntoView({ behavior, block: 'start' });
+    } else {
+      window.scrollTo({ top: 0, behavior });
     }
     if (route === 'register') renderSquadBuilder();
     if (route === 'idp') renderIdpPortal();
     if (route === 'leaderboard') renderLeaderboard();
     if (route === 'admin') renderAdminPortal();
+    window.ipRefreshMotion?.();
+    updateIndicator();
   }
 
   links.forEach(link => {
@@ -776,7 +851,7 @@ function initNavigation() {
       e.preventDefault();
       const route = link.dataset.route;
       if (route) {
-        navigateTo(route);
+        navigateTo(route, link.dataset.scrollTarget || '');
         history.pushState(null, null, `#${route}`);
       }
     });
@@ -792,35 +867,80 @@ function initNavigation() {
 }
 
 function initScrollEffects() {
-  const revealItems = document.querySelectorAll('[data-reveal], .reveal-item');
-  if ('IntersectionObserver' in window) {
-    const observer = new IntersectionObserver((entries, instance) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
+  if (!_motionInitialized) {
+    _motionInitialized = true;
+    if ('IntersectionObserver' in window) {
+      _motionObserver = new IntersectionObserver((entries, instance) => {
+        entries.forEach(entry => {
+          if (!entry.isIntersecting) return;
           entry.target.classList.add('is-visible');
+          entry.target.classList.remove('motion-pending');
+          _motionPending.delete(entry.target);
+          _motionSeen.add(entry.target);
           instance.unobserve(entry.target);
-        }
+        });
+      }, { threshold: 0.12, rootMargin: '0px 0px -30px' });
+    }
+    _reducedMotion.addEventListener?.('change', () => {
+      refreshMotion();
+      if (!_reducedMotion.matches) return;
+      document.querySelectorAll('.modal-shell, #mobile-menu').forEach(element => {
+        const state = _visibilityMotion.get(element);
+        if (state) setMotionVisibility(element, state.open);
       });
-    }, { threshold: 0.12, rootMargin: '0px 0px -30px' });
-    revealItems.forEach(item => observer.observe(item));
-  } else {
-    revealItems.forEach(item => item.classList.add('is-visible'));
+    });
   }
 
+  refreshMotion();
+
   const refreshButton = document.getElementById('refresh-arena');
-  refreshButton?.addEventListener('click', async () => {
-    refreshButton.disabled = true;
-    refreshButton.classList.add('is-refreshing');
-    await syncFromServer();
-    renderWeeklyWars();
-    renderHomeDashboard();
-    refreshButton.disabled = false;
-    refreshButton.classList.remove('is-refreshing');
-    showToast(_arenaConnection === 'connected' ? 'Arena data refreshed.' : 'Showing cached arena data.', 'info');
+  if (refreshButton && !refreshButton.dataset.motionBound) {
+    refreshButton.dataset.motionBound = 'true';
+    refreshButton.addEventListener('click', async () => {
+      refreshButton.disabled = true;
+      refreshButton.classList.add('is-refreshing');
+      await syncFromServer();
+      renderWeeklyWars();
+      renderHomeDashboard();
+      refreshButton.disabled = false;
+      refreshButton.classList.remove('is-refreshing');
+      showToast(_arenaConnection === 'connected' ? 'Arena data refreshed.' : 'Showing cached arena data.', 'info');
+    });
+  }
+}
+
+function refreshMotion() {
+  if (!_motionInitialized) return;
+  // Release detached API-rendered cards instead of retaining observer references.
+  _motionPending.forEach(item => {
+    if (item.isConnected) return;
+    _motionObserver?.unobserve(item);
+    _motionPending.delete(item);
+  });
+  const selector = '[data-reveal], .reveal-item, #view-home .section-heading-row, #view-home .card-3d-wrap, .live-event-card, .process-step, .why-panel, .final-cta-inner';
+  document.querySelectorAll(selector).forEach(item => {
+    // A formerly empty API container may now contain revealable cards. Unhide
+    // that parent too, so refreshed children never sit inside a pending wrapper.
+    if (item.querySelector(selector) || !_motionObserver || _reducedMotion.matches) {
+      item.classList.add('is-visible');
+      item.classList.remove('motion-pending');
+      _motionObserver?.unobserve(item);
+      _motionPending.delete(item);
+      _motionSeen.add(item);
+      return;
+    }
+    if (_motionSeen.has(item) || _motionPending.has(item)) return;
+    const siblings = Array.from(item.parentElement.children).filter(sibling => sibling.matches(selector));
+    item.style.setProperty('--reveal-delay', `${Math.min(siblings.indexOf(item), 3) * 55}ms`);
+    _motionObserver.observe(item);
+    item.classList.add('motion-reveal', 'motion-pending');
+    _motionPending.add(item);
   });
 }
 
-// ==================== 3D EFFECTS DISABLED ====================
+window.ipRefreshMotion = refreshMotion;
+
+// Keep the existing canvas hook disabled; this motion layer uses CSS and IntersectionObserver only.
 function initThreeJS() {
   const container = document.getElementById('three-canvas-container');
   if (container) {
@@ -832,17 +952,6 @@ function initThreeJS() {
 function initParticlesFallback() {}
 function initParticlesOnCanvas() {}
 function initParticles() {}
-
-function setupCard3DTilt() {
-  // Clear any existing inline transforms on cards
-  document.querySelectorAll('.card-3d').forEach(card => {
-    card.style.transform = 'none';
-  });
-  document.querySelectorAll('.card-glare').forEach(glare => {
-    glare.style.display = 'none';
-  });
-}
-
 
 // ==================== MATCH COUNTDOWN ====================
 function initCountdown() {
@@ -945,7 +1054,7 @@ function renderHomeDashboard() {
   const statsContainer = document.getElementById('platform-stats-grid');
   if (statsContainer) {
     statsContainer.innerHTML = stats.map(stat => `
-      <article class="platform-stat">
+      <article class="platform-stat reveal-item" data-reveal>
         <span class="platform-stat-icon"><i class="fa-solid ${stat.icon}" aria-hidden="true"></i></span>
         <strong class="platform-stat-value">${escapeMarkup(stat.value)}</strong>
         <span class="platform-stat-label">${escapeMarkup(stat.label)}</span>
@@ -962,7 +1071,7 @@ function renderHomeDashboard() {
       const groupCount = registrations.filter(reg => Number(reg.groupIndex) === day).length;
       const isActive = day === Number(activeDay) || /active/i.test(group.status || '');
       return `
-        <article class="match-day-card ${isActive ? 'is-active' : ''}" style="--day-accent: ${day % 2 ? 'var(--ip-purple)' : 'var(--ip-blue)'}">
+        <article class="match-day-card interactive-card reveal-item ${isActive ? 'is-active' : ''}" data-reveal style="--day-accent: ${day % 2 ? 'var(--ip-purple)' : 'var(--ip-blue)'}">
           <div class="match-day-head"><strong class="match-day-number">0${day}</strong><span class="match-day-status">${isActive ? 'Active lobby' : 'Upcoming'}</span></div>
           <h3 class="match-day-name">${escapeMarkup(group.group)}</h3>
           <div class="match-day-meta"><span>${escapeMarkup(group.day.split('@')[0].trim())}</span><strong>${groupCount}/12</strong></div>
@@ -975,10 +1084,10 @@ function renderHomeDashboard() {
   if (teams) {
     const visibleTeams = registrations.filter(reg => reg.teamName).slice(0, 6);
     teams.innerHTML = visibleTeams.length ? visibleTeams.map(reg => `
-      <article class="confirmed-team-card">
-        <div class="team-card-topline"><span>${escapeMarkup(reg.group || 'SEASON 12')}</span><strong class="team-slot">#${escapeMarkup(reg.slotNumber || '—')}</strong></div>
+      <article class="confirmed-team-card interactive-card reveal-item" data-reveal>
+        <div class="team-card-topline"><span>${escapeMarkup(reg.group || 'SEASON 12')}</span><strong class="team-slot">#${escapeMarkup(reg.slotNumber || 'â€”')}</strong></div>
         <h3>${escapeMarkup(reg.teamName)} <span class="text-gradient">[${escapeMarkup(reg.teamTag || 'IP')}]</span></h3>
-        <p class="team-card-captain">Captain / IGL · @${escapeMarkup(reg.iglUsername || 'unknown')}</p>
+        <p class="team-card-captain">Captain / IGL Â· @${escapeMarkup(reg.iglUsername || 'unknown')}</p>
         <div class="team-card-bottom"><span><i class="fa-solid fa-shield-halved"></i> ${escapeMarkup(reg.status || 'CONFIRMED')}</span><strong>${escapeMarkup(reg.matchDay || 'Match schedule locked')}</strong></div>
       </article>
     `).join('') : `
@@ -993,7 +1102,7 @@ function renderHomeDashboard() {
     const rows = standings?.isPublished && Array.isArray(standings.standings) ? standings.standings.slice(0, 3) : [];
     preview.innerHTML = `
       <div class="home-leaderboard-heading"><div><span class="eyebrow-label">OFFICIAL STANDINGS</span><h3>LEADERBOARD <span class="text-gradient">PULSE.</span></h3></div><i class="fa-solid fa-ranking-star"></i></div>
-      ${rows.length ? `<div class="home-leaderboard-rows">${rows.map(row => `<div class="home-leaderboard-row"><span>#${escapeMarkup(row.rank)}</span><strong>${escapeMarkup(row.team)}</strong><b>${escapeMarkup(row.totalPts)} PTS</b></div>`).join('')}</div><a href="#leaderboard" data-route="leaderboard" class="home-leaderboard-link">View full standings <i class="fa-solid fa-arrow-right"></i></a>` : `<div class="leaderboard-preview-empty"><i class="fa-solid fa-hourglass-half"></i><p>Official standings will appear here after results are published.</p><a href="#rules" data-route="rules">Read the scoring format <i class="fa-solid fa-arrow-right"></i></a></div>`}
+      ${rows.length ? `<div class="home-leaderboard-rows">${rows.map(row => `<div class="home-leaderboard-row reveal-item" data-reveal><span>#${escapeMarkup(row.rank)}</span><strong>${escapeMarkup(row.team)}</strong><b>${escapeMarkup(row.totalPts)} PTS</b></div>`).join('')}</div><a href="#leaderboard" data-route="leaderboard" class="home-leaderboard-link">View full standings <i class="fa-solid fa-arrow-right"></i></a>` : `<div class="leaderboard-preview-empty"><i class="fa-solid fa-hourglass-half"></i><p>Official standings will appear here after results are published.</p><a href="#rules" data-route="rules">Read the scoring format <i class="fa-solid fa-arrow-right"></i></a></div>`}
     `;
     preview.querySelectorAll('[data-route]').forEach(link => link.addEventListener('click', event => {
       event.preventDefault();
@@ -1001,6 +1110,7 @@ function renderHomeDashboard() {
       document.querySelector(`[data-route="${route}"]`)?.click();
     }));
   }
+  window.ipRefreshMotion?.();
 }
 
 function renderWeeklyWars() {
@@ -1015,7 +1125,7 @@ function renderWeeklyWars() {
     const fillPercent = Math.round((filledCount / totalSlots) * 100);
     const groups = t.groupSchedule || [];
     return `
-      <article class="weekly-war-card interactive-card reveal-item is-visible">
+      <article class="weekly-war-card interactive-card reveal-item" data-reveal>
         <div class="war-card-header"><span class="war-game-label"><i class="fa-solid fa-fire-flame-curved"></i> ${escapeMarkup(t.game)} / BR SQUAD</span><span class="war-live-badge">${filledCount >= totalSlots ? 'FIELD LOCKED' : 'REGISTRATION OPEN'}</span></div>
         <div class="war-title-row"><h3>${escapeMarkup(t.title.replace('FREE FIRE MAX ', ''))}</h3><div class="war-prize"><span>PRIZE POOL</span><strong>${escapeMarkup(t.prizePool)}</strong></div></div>
         <p class="war-description">${escapeMarkup(t.description)}</p>
@@ -1028,30 +1138,12 @@ function renderWeeklyWars() {
   if (container) container.innerHTML = html;
   if (warsListContainer) warsListContainer.innerHTML = html;
   renderHomeDashboard();
+  window.ipRefreshMotion?.();
 }
 
 function goToRegistration(tournamentId = '') {
-  const sections = document.querySelectorAll('.page-section');
-  sections.forEach(sec => {
-    if (sec.id === 'view-register') {
-      sec.classList.remove('hidden');
-    } else {
-      sec.classList.add('hidden');
-    }
-  });
-
-  const links = document.querySelectorAll('[data-route]');
-  links.forEach(l => {
-    if (l.dataset.route === 'register') {
-      l.classList.add('active');
-    } else {
-      l.classList.remove('active');
-    }
-  });
-
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-  history.pushState(null, null, '#register');
-  renderSquadBuilder();
+  // Use the same existing route handler for card CTAs and the mobile menu CTA.
+  document.querySelector('.desktop-nav [data-route="register"]')?.click();
 }
 
 // Tournament Details Modal
@@ -1068,69 +1160,69 @@ function openTournamentDetails(tournamentId) {
       <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-transparent"></div>
       <div class="absolute bottom-4 left-4 right-4 flex justify-between items-end">
         <div>
-          <span class="px-2.5 py-1 text-xs font-tech font-bold uppercase rounded-md bg-amber-500 text-black">
+          <span class="px-2.5 py-1 text-xs font-tech font-bold uppercase rounded-md bg-[#2C3480] text-white">
             ${tourney.game}
           </span>
           <h2 class="text-xl font-heading font-extrabold text-white mt-1">${tourney.title}</h2>
         </div>
         <div class="text-right">
-          <span class="text-xs text-slate-400 block font-tech font-semibold">PRIZE POOL</span>
-          <span class="text-xl font-heading font-extrabold text-amber-400">${tourney.prizePool}</span>
+          <span class="text-xs text-white/50 block font-tech font-semibold">PRIZE POOL</span>
+          <span class="text-xl font-heading font-extrabold text-[#3D48A8]">${tourney.prizePool}</span>
         </div>
       </div>
     </div>
 
-    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6 bg-slate-900 p-3 rounded-xl border border-slate-800 text-center">
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6 bg-[#060810] p-3 rounded-xl border border-white/10 text-center">
       <div>
-        <div class="text-xs text-slate-400 font-tech">TOTAL SLOTS</div>
+        <div class="text-xs text-white/50 font-tech">TOTAL SLOTS</div>
         <div class="text-sm font-bold text-white">48 Squads</div>
       </div>
       <div>
-        <div class="text-xs text-slate-400 font-tech">STRUCTURE</div>
+        <div class="text-xs text-white/50 font-tech">STRUCTURE</div>
         <div class="text-sm font-bold text-white">4 Days (12/Day)</div>
       </div>
       <div>
-        <div class="text-xs text-slate-400 font-tech">ENTRY FEE</div>
-        <div class="text-sm font-bold text-emerald-400">${tourney.entryFee}</div>
+        <div class="text-xs text-white/50 font-tech">ENTRY FEE</div>
+        <div class="text-sm font-bold text-white">${tourney.entryFee}</div>
       </div>
       <div>
-        <div class="text-xs text-slate-400 font-tech">GUN ATTR</div>
+        <div class="text-xs text-white/50 font-tech">GUN ATTR</div>
         <div class="text-sm font-bold text-red-400">OFF</div>
       </div>
     </div>
 
     <div class="mb-6 space-y-4">
       <div>
-        <h4 class="text-sm font-heading font-bold text-amber-400 mb-2 uppercase tracking-wide">
+        <h4 class="text-sm font-heading font-bold text-[#3D48A8] mb-2 uppercase tracking-wide">
           <i class="fa-solid fa-trophy mr-1.5"></i> Prize Distribution
         </h4>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
           ${tourney.prizeBreakdown.map(p => `
-            <div class="flex justify-between items-center p-2.5 rounded-lg bg-slate-900/60 border border-slate-800 text-xs font-tech">
-              <span class="font-semibold text-slate-300">${p.rank}</span>
-              <span class="font-bold text-amber-400">${p.prize}</span>
+            <div class="flex justify-between items-center p-2.5 rounded-lg bg-slate-900/60 border border-white/10 text-xs font-tech">
+              <span class="font-semibold text-white/70">${p.rank}</span>
+              <span class="font-bold text-[#3D48A8]">${p.prize}</span>
             </div>
           `).join('')}
         </div>
       </div>
 
       <div>
-        <h4 class="text-sm font-heading font-bold text-amber-400 mb-2 uppercase tracking-wide">
+        <h4 class="text-sm font-heading font-bold text-[#3D48A8] mb-2 uppercase tracking-wide">
           <i class="fa-solid fa-calendar-days mr-1.5"></i> 4-Day Group Breakdown
         </h4>
         <div class="grid grid-cols-2 gap-2 text-xs font-tech">
           ${tourney.groupSchedule.map(g => `
-            <div class="p-2.5 rounded-lg bg-slate-900 border border-slate-800">
-              <span class="text-amber-400 font-bold block">${g.group} (${g.slots})</span>
-              <span class="text-slate-400">${g.day}</span>
+            <div class="p-2.5 rounded-lg bg-[#060810] border border-white/10">
+              <span class="text-[#3D48A8] font-bold block">${g.group} (${g.slots})</span>
+              <span class="text-white/50">${g.day}</span>
             </div>
           `).join('')}
         </div>
       </div>
     </div>
 
-    <div class="flex justify-end gap-3 pt-4 border-t border-slate-800">
-      <button onclick="closeTournamentModal()" class="px-5 py-2 rounded-lg bg-slate-800 text-slate-300 hover:text-white font-heading font-bold text-xs">
+    <div class="flex justify-end gap-3 pt-4 border-t border-white/10">
+      <button onclick="closeTournamentModal()" class="px-5 py-2 rounded-lg bg-[#0a0b14] text-white/70 hover:text-white font-heading font-bold text-xs">
         Close
       </button>
       <button onclick="closeTournamentModal(); goToRegistration('${tourney.id}')" class="btn-esports-primary px-6 py-2 rounded-lg font-heading font-bold text-xs">
@@ -1139,12 +1231,11 @@ function openTournamentDetails(tournamentId) {
     </div>
   `;
 
-  modal.classList.remove('hidden');
+  openMotionModal(modal);
 }
 
 function closeTournamentModal() {
-  const modal = document.getElementById('tournament-details-modal');
-  if (modal) modal.classList.add('hidden');
+  closeMotionModal(document.getElementById('tournament-details-modal'));
 }
 
 function setupModals() {
@@ -1168,6 +1259,14 @@ function setupModals() {
       if (e.target === aModal) closeAuthModal();
     });
   }
+
+  document.addEventListener('keydown', event => {
+    if (event.key !== 'Escape') return;
+    closeAuthModal();
+    closeGoogleProfileModal();
+    closeTournamentModal();
+    closePassModal();
+  });
 }
 
 // ==================== SQUAD BUILDER & 48-SLOT REGISTRATION ====================
@@ -1180,11 +1279,11 @@ function renderSquadBuilder() {
   if (!user) {
     container.innerHTML = `
       <div class="glass-panel p-8 sm:p-12 text-center rounded-2xl border border-white/10">
-        <div class="w-14 h-14 mx-auto mb-4 rounded-full bg-amber-500/20 border border-amber-400 flex items-center justify-center text-amber-400 text-xl">
+        <div class="w-14 h-14 mx-auto mb-4 rounded-full bg-[#2C3480]/20 border border-[#2C3480]/50 flex items-center justify-center text-[#3D48A8] text-xl">
           <i class="fa-solid fa-lock"></i>
         </div>
         <h3 class="font-display font-extrabold text-2xl text-white mb-2">CAPTAIN LOGIN REQUIRED</h3>
-        <p class="text-slate-300 text-xs sm:text-sm max-w-md mx-auto mb-6">
+        <p class="text-white/70 text-xs sm:text-sm max-w-md mx-auto mb-6">
           To register for Weekly Wars, every squad member must create an account first. The Captain will enter their registered usernames to form the permanent roster.
         </p>
         <button onclick="openAuthModal()" class="btn-esports-primary px-7 py-3 rounded-lg font-heading font-bold text-xs uppercase tracking-wider">
@@ -1203,27 +1302,27 @@ function renderSquadBuilder() {
     const myRegistration = registrations.find(r => r.squadId === existingSquad.squadId && r.tourneyId === 'ww-ff-12');
 
     container.innerHTML = `
-      <div class="glass-panel p-6 sm:p-8 rounded-2xl border border-amber-500/30">
+      <div class="glass-panel p-6 sm:p-8 rounded-2xl border border-[#2C3480]/40">
         
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-white/10 pb-4 mb-6">
           <div>
-            <span class="px-2.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 text-xs font-tech font-bold uppercase border border-emerald-500/40">
+            <span class="px-2.5 py-0.5 rounded bg-[#2C3480]/18 text-white text-xs font-tech font-bold uppercase border border-[#2C3480]/45">
               <i class="fa-solid fa-shield-halved mr-1"></i> VERIFIED PERMANENT SQUAD
             </span>
-            <h3 class="font-display font-black text-2xl sm:text-3xl text-white mt-1">${existingSquad.teamName} <span class="text-amber-400">[${existingSquad.teamTag}]</span></h3>
-            <span class="text-xs font-tech text-slate-400">Created by Captain @${existingSquad.iglUsername}</span>
+            <h3 class="font-display font-black text-2xl sm:text-3xl text-white mt-1">${existingSquad.teamName} <span class="text-[#3D48A8]">[${existingSquad.teamTag}]</span></h3>
+            <span class="text-xs font-tech text-white/50">Created by Captain @${existingSquad.iglUsername}</span>
           </div>
 
           <div class="mt-3 sm:mt-0">
             ${myRegistration ? `
               <div class="text-right">
-                <span class="px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 text-xs font-tech font-bold uppercase border border-emerald-500/40 block">
+                <span class="px-3 py-1.5 rounded-lg bg-[#2C3480]/18 text-white text-xs font-tech font-bold uppercase border border-[#2C3480]/45 block">
                   <i class="fa-solid fa-circle-check mr-1"></i> REGISTERED: SLOT #${myRegistration.slotNumber}
                 </span>
-                <span class="text-[11px] font-tech text-amber-300 block mt-1">${myRegistration.group}</span>
+                <span class="text-[11px] font-tech text-white/80 block mt-1">${myRegistration.group}</span>
               </div>
             ` : `
-              <span class="px-3 py-1.5 rounded-lg bg-amber-500/20 text-amber-400 text-xs font-tech font-bold uppercase border border-amber-500/40">
+              <span class="px-3 py-1.5 rounded-lg bg-[#2C3480]/20 text-[#3D48A8] text-xs font-tech font-bold uppercase border border-[#2C3480]/45">
                 READY FOR REGISTRATION (48 SLOTS)
               </span>
             `}
@@ -1231,28 +1330,28 @@ function renderSquadBuilder() {
         </div>
 
         <div class="mb-8">
-          <span class="text-xs font-tech text-slate-400 uppercase tracking-wider block mb-3 font-semibold">LOCKED SQUAD ROSTER (${existingSquad.players.length} PLAYERS)</span>
+          <span class="text-xs font-tech text-white/50 uppercase tracking-wider block mb-3 font-semibold">LOCKED SQUAD ROSTER (${existingSquad.players.length} PLAYERS)</span>
           <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
             ${existingSquad.players.map((p, idx) => `
-              <div class="bg-slate-900/80 p-3.5 rounded-xl border border-slate-800 flex items-center justify-between">
+              <div class="bg-[#060810]/90 p-3.5 rounded-xl border border-white/10 flex items-center justify-between">
                 <div>
-                  <span class="text-[10px] font-tech text-amber-400 uppercase font-bold block">${idx === 0 ? 'IGL / CAPTAIN' : p.role}</span>
+                  <span class="text-[10px] font-tech text-[#3D48A8] uppercase font-bold block">${idx === 0 ? 'IGL / CAPTAIN' : p.role}</span>
                   <h5 class="font-heading font-bold text-white text-sm leading-tight">${p.ign}</h5>
-                  <span class="text-xs font-tech text-slate-400">@${p.username}</span>
+                  <span class="text-xs font-tech text-white/50">@${p.username}</span>
                 </div>
                 <div class="text-right">
-                  <span class="text-[10px] font-tech text-slate-500 block">UID</span>
-                  <span class="text-xs font-tech font-bold text-slate-300">${p.uid}</span>
+                  <span class="text-[10px] font-tech text-white/40 block">UID</span>
+                  <span class="text-xs font-tech font-bold text-white/70">${p.uid}</span>
                 </div>
               </div>
             `).join('')}
           </div>
         </div>
 
-        <div class="bg-slate-950/80 p-5 rounded-xl border border-white/10 flex flex-col sm:flex-row justify-between items-center gap-4">
+        <div class="bg-[#030508]/80 p-5 rounded-xl border border-white/10 flex flex-col sm:flex-row justify-between items-center gap-4">
           <div>
             <h4 class="font-heading font-bold text-base text-white">Free Fire MAX Weekly Wars - Season 12</h4>
-            <p class="text-xs text-slate-400 font-tech">48 Total Slots (12 Squads per Day) &bull; Line-wise Slot Booking &bull; Entry: 100% Free</p>
+            <p class="text-xs text-white/50 font-tech">48 Total Slots (12 Squads per Day) &bull; Line-wise Slot Booking &bull; Entry: 100% Free</p>
           </div>
 
           <div class="flex gap-2">
@@ -1261,7 +1360,7 @@ function renderSquadBuilder() {
                 <i class="fa-solid fa-ticket"></i> View Pass
               </button>
               <a href="#idp" data-route="idp" class="btn-esports-secondary px-4 py-2.5 rounded-lg font-heading font-bold text-xs uppercase flex items-center gap-2">
-                <i class="fa-solid fa-key text-amber-400"></i> Go To IDP
+                <i class="fa-solid fa-key text-[#3D48A8]"></i> Go To IDP
               </a>
             ` : `
               <button onclick="registerPermanentSquad('${existingSquad.squadId}', 'ww-ff-12')" class="btn-esports-primary px-6 py-3 rounded-lg font-heading font-bold text-xs uppercase tracking-wider flex items-center gap-2">
@@ -1277,12 +1376,12 @@ function renderSquadBuilder() {
   }
 
   container.innerHTML = `
-    <div class="glass-panel p-6 sm:p-8 rounded-2xl border border-amber-500/30">
+    <div class="glass-panel p-6 sm:p-8 rounded-2xl border border-[#2C3480]/40">
       
       <div class="border-b border-white/10 pb-4 mb-6">
-        <span class="text-xs font-tech text-amber-400 uppercase tracking-widest font-bold">CAPTAIN SQUAD BUILDER</span>
-        <h3 class="font-display font-black text-2xl sm:text-3xl text-white">FORM YOUR <span class="text-amber-400">PERMANENT SQUAD</span></h3>
-        <p class="text-xs text-slate-300 mt-1">
+        <span class="text-xs font-tech text-[#3D48A8] uppercase tracking-widest font-bold">CAPTAIN SQUAD BUILDER</span>
+        <h3 class="font-display font-black text-2xl sm:text-3xl text-white">FORM YOUR <span class="text-[#3D48A8]">PERMANENT SQUAD</span></h3>
+        <p class="text-xs text-white/70 mt-1">
           Every player must be registered on this website. Enter your teammates' registered usernames (@username) to fetch their verified Free Fire IGN and UID. Once formed, this squad will be permanently locked and can be reused for all 48-slot Weekly Wars tournaments.
         </p>
       </div>
@@ -1291,74 +1390,74 @@ function renderSquadBuilder() {
         
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label class="block text-xs font-tech text-slate-400 uppercase mb-1">Squad / Guild Name <span class="text-red-500">*</span></label>
-            <input type="text" id="squad-team-name" required placeholder="e.g. INSANE FORCE" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white text-xs font-tech focus:border-amber-400 focus:outline-none">
+            <label class="block text-xs font-tech text-white/50 uppercase mb-1">Squad / Guild Name <span class="text-red-500">*</span></label>
+            <input type="text" id="squad-team-name" required placeholder="e.g. INSANE FORCE" class="w-full bg-[#060810] border border-white/12 rounded-lg p-2.5 text-white text-xs font-tech focus:border-[#3D48A8] focus:outline-none">
           </div>
           <div>
-            <label class="block text-xs font-tech text-slate-400 uppercase mb-1">Squad Tag <span class="text-red-500">*</span></label>
-            <input type="text" id="squad-team-tag" required placeholder="e.g. INF" maxlength="5" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white text-xs font-tech uppercase focus:border-amber-400 focus:outline-none">
+            <label class="block text-xs font-tech text-white/50 uppercase mb-1">Squad Tag <span class="text-red-500">*</span></label>
+            <input type="text" id="squad-team-tag" required placeholder="e.g. INF" maxlength="5" class="w-full bg-[#060810] border border-white/12 rounded-lg p-2.5 text-white text-xs font-tech uppercase focus:border-[#3D48A8] focus:outline-none">
           </div>
         </div>
 
-        <div class="bg-slate-900/90 p-3.5 rounded-xl border border-amber-500/30">
-          <span class="text-[10px] font-tech text-amber-400 uppercase font-bold block mb-1">CAPTAIN (IGL) - LOGGED IN</span>
+        <div class="bg-[#060810]/95 p-3.5 rounded-xl border border-[#2C3480]/40">
+          <span class="text-[10px] font-tech text-[#3D48A8] uppercase font-bold block mb-1">CAPTAIN (IGL) - LOGGED IN</span>
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs font-tech">
             <div>
-              <span class="text-slate-500">Username:</span>
+              <span class="text-white/40">Username:</span>
               <strong class="text-white block">@${user.username}</strong>
             </div>
             <div>
-              <span class="text-slate-500">Free Fire IGN:</span>
-              <strong class="text-amber-300 block">${user.ign}</strong>
+              <span class="text-white/40">Free Fire IGN:</span>
+              <strong class="text-white/80 block">${user.ign}</strong>
             </div>
             <div>
-              <span class="text-slate-500">Free Fire UID:</span>
-              <strong class="text-slate-300 block">${user.uid}</strong>
+              <span class="text-white/40">Free Fire UID:</span>
+              <strong class="text-white/70 block">${user.uid}</strong>
             </div>
           </div>
         </div>
 
-        <div class="bg-slate-900/60 p-3.5 rounded-xl border border-slate-800">
-          <label class="block text-xs font-tech text-slate-400 uppercase mb-1">Player 2 Username <span class="text-red-500">*</span></label>
+        <div class="bg-slate-900/60 p-3.5 rounded-xl border border-white/10">
+          <label class="block text-xs font-tech text-white/50 uppercase mb-1">Player 2 Username <span class="text-red-500">*</span></label>
           <div class="relative">
-            <span class="absolute left-3 top-2.5 text-slate-500 text-xs font-tech">@</span>
-            <input type="text" id="p2-username" required placeholder="viper_sniper" oninput="validatePlayerInput('p2', this.value)" class="w-full bg-slate-950 border border-slate-700 rounded-lg pl-7 pr-3 py-2 text-white text-xs font-tech focus:border-amber-400 focus:outline-none">
+            <span class="absolute left-3 top-2.5 text-white/40 text-xs font-tech">@</span>
+            <input type="text" id="p2-username" required placeholder="viper_sniper" oninput="validatePlayerInput('p2', this.value)" class="w-full bg-[#030508] border border-white/12 rounded-lg pl-7 pr-3 py-2 text-white text-xs font-tech focus:border-[#3D48A8] focus:outline-none">
           </div>
-          <div id="p2-status" class="mt-1.5 text-xs font-tech text-slate-400">
-            <span class="text-slate-500">Type registered username (e.g. viper_sniper)</span>
+          <div id="p2-status" class="mt-1.5 text-xs font-tech text-white/50">
+            <span class="text-white/40">Type registered username (e.g. viper_sniper)</span>
           </div>
         </div>
 
-        <div class="bg-slate-900/60 p-3.5 rounded-xl border border-slate-800">
-          <label class="block text-xs font-tech text-slate-400 uppercase mb-1">Player 3 Username <span class="text-red-500">*</span></label>
+        <div class="bg-slate-900/60 p-3.5 rounded-xl border border-white/10">
+          <label class="block text-xs font-tech text-white/50 uppercase mb-1">Player 3 Username <span class="text-red-500">*</span></label>
           <div class="relative">
-            <span class="absolute left-3 top-2.5 text-slate-500 text-xs font-tech">@</span>
-            <input type="text" id="p3-username" required placeholder="blaze_rusher" oninput="validatePlayerInput('p3', this.value)" class="w-full bg-slate-950 border border-slate-700 rounded-lg pl-7 pr-3 py-2 text-white text-xs font-tech focus:border-amber-400 focus:outline-none">
+            <span class="absolute left-3 top-2.5 text-white/40 text-xs font-tech">@</span>
+            <input type="text" id="p3-username" required placeholder="blaze_rusher" oninput="validatePlayerInput('p3', this.value)" class="w-full bg-[#030508] border border-white/12 rounded-lg pl-7 pr-3 py-2 text-white text-xs font-tech focus:border-[#3D48A8] focus:outline-none">
           </div>
-          <div id="p3-status" class="mt-1.5 text-xs font-tech text-slate-400">
-            <span class="text-slate-500">Type registered username</span>
+          <div id="p3-status" class="mt-1.5 text-xs font-tech text-white/50">
+            <span class="text-white/40">Type registered username</span>
           </div>
         </div>
 
-        <div class="bg-slate-900/60 p-3.5 rounded-xl border border-slate-800">
-          <label class="block text-xs font-tech text-slate-400 uppercase mb-1">Player 4 Username <span class="text-red-500">*</span></label>
+        <div class="bg-slate-900/60 p-3.5 rounded-xl border border-white/10">
+          <label class="block text-xs font-tech text-white/50 uppercase mb-1">Player 4 Username <span class="text-red-500">*</span></label>
           <div class="relative">
-            <span class="absolute left-3 top-2.5 text-slate-500 text-xs font-tech">@</span>
-            <input type="text" id="p4-username" required placeholder="shadow_ff" oninput="validatePlayerInput('p4', this.value)" class="w-full bg-slate-950 border border-slate-700 rounded-lg pl-7 pr-3 py-2 text-white text-xs font-tech focus:border-amber-400 focus:outline-none">
+            <span class="absolute left-3 top-2.5 text-white/40 text-xs font-tech">@</span>
+            <input type="text" id="p4-username" required placeholder="shadow_ff" oninput="validatePlayerInput('p4', this.value)" class="w-full bg-[#030508] border border-white/12 rounded-lg pl-7 pr-3 py-2 text-white text-xs font-tech focus:border-[#3D48A8] focus:outline-none">
           </div>
-          <div id="p4-status" class="mt-1.5 text-xs font-tech text-slate-400">
-            <span class="text-slate-500">Type registered username</span>
+          <div id="p4-status" class="mt-1.5 text-xs font-tech text-white/50">
+            <span class="text-white/40">Type registered username</span>
           </div>
         </div>
 
-        <div class="bg-slate-900/40 p-3.5 rounded-xl border border-slate-800/80">
-          <label class="block text-xs font-tech text-slate-400 uppercase mb-1">5th Player (Substitute) Username (Optional)</label>
+        <div class="bg-slate-900/40 p-3.5 rounded-xl border border-white/10/80">
+          <label class="block text-xs font-tech text-white/50 uppercase mb-1">5th Player (Substitute) Username (Optional)</label>
           <div class="relative">
-            <span class="absolute left-3 top-2.5 text-slate-500 text-xs font-tech">@</span>
-            <input type="text" id="p5-username" placeholder="cyborg_sub" oninput="validatePlayerInput('p5', this.value)" class="w-full bg-slate-950 border border-slate-700 rounded-lg pl-7 pr-3 py-2 text-white text-xs font-tech focus:border-amber-400 focus:outline-none">
+            <span class="absolute left-3 top-2.5 text-white/40 text-xs font-tech">@</span>
+            <input type="text" id="p5-username" placeholder="cyborg_sub" oninput="validatePlayerInput('p5', this.value)" class="w-full bg-[#030508] border border-white/12 rounded-lg pl-7 pr-3 py-2 text-white text-xs font-tech focus:border-[#3D48A8] focus:outline-none">
           </div>
-          <div id="p5-status" class="mt-1.5 text-xs font-tech text-slate-400">
-            <span class="text-slate-500">Optional 5th player username</span>
+          <div id="p5-status" class="mt-1.5 text-xs font-tech text-white/50">
+            <span class="text-white/40">Optional 5th player username</span>
           </div>
         </div>
 
@@ -1384,7 +1483,7 @@ window.validatePlayerInput = async function(prefix, username) {
 
   const cleanUser = username.trim().toLowerCase();
   if (!cleanUser) {
-    statusEl.innerHTML = `<span class="text-slate-500">Type registered username</span>`;
+    statusEl.innerHTML = `<span class="text-white/40">Type registered username</span>`;
     return;
   }
 
@@ -1432,7 +1531,7 @@ window.validatePlayerInput = async function(prefix, username) {
   }
 
   statusEl.innerHTML = `
-    <div class="flex items-center gap-2 text-emerald-400 font-bold bg-emerald-950/40 px-3 py-1 rounded-lg border border-emerald-500/30">
+    <div class="flex items-center gap-2 text-white font-bold bg-[#2C3480]/15 px-3 py-1 rounded-lg border border-[#2C3480]/40">
       <i class="fa-solid fa-circle-check"></i>
       <span>Verified: <strong>${player.ign}</strong> (UID: ${player.uid})</span>
     </div>
@@ -1677,21 +1776,21 @@ function renderIdpPortal() {
 
   container.innerHTML = `
     <!-- Active Match Day Banner -->
-    <div class="glass-panel p-6 sm:p-8 rounded-2xl border border-amber-500/30 mb-8 relative overflow-hidden">
+    <div class="glass-panel p-6 sm:p-8 rounded-2xl border border-[#2C3480]/40 mb-8 relative overflow-hidden">
       <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-white/10 pb-4 mb-6">
         <div>
-          <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-600/20 text-red-400 text-xs font-tech font-bold uppercase border border-red-500/40">
-            <span class="w-2 h-2 rounded-full bg-red-500 animate-ping"></span> TODAY'S ACTIVE MATCH LOBBY
+          <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/08 text-white/70 text-xs font-tech font-bold uppercase border border-white/15">
+            <span class="w-2 h-2 rounded-full bg-[#2C3480] animate-ping"></span> TODAY'S ACTIVE MATCH LOBBY
           </span>
-          <h2 class="font-display font-extrabold text-3xl text-white mt-1">FREE FIRE <span class="text-amber-400">ROOM ID & PASSWORD</span></h2>
-          <p class="text-xs text-slate-300 font-tech mt-1">
-            Active Schedule: <strong class="text-amber-400">${activeDayTitle}</strong> | Match Time: <strong>${idp.matchTime}</strong>
+          <h2 class="font-display font-extrabold text-3xl text-white mt-1">FREE FIRE <span class="text-[#3D48A8]">ROOM ID & PASSWORD</span></h2>
+          <p class="text-xs text-white/70 font-tech mt-1">
+            Active Schedule: <strong class="text-[#3D48A8]">${activeDayTitle}</strong> | Match Time: <strong>${idp.matchTime}</strong>
           </p>
         </div>
 
         <div class="text-left md:text-right">
-          <span class="text-xs font-tech text-slate-400 uppercase block font-semibold">SECURITY STATUS</span>
-          <span class="px-3 py-1 rounded-lg ${idp.isReleased ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' : 'bg-amber-500/20 text-amber-400 border border-amber-500/40'} text-xs font-tech font-bold uppercase inline-block mt-1">
+          <span class="text-xs font-tech text-white/50 uppercase block font-semibold">SECURITY STATUS</span>
+          <span class="px-3 py-1 rounded-lg ${idp.isReleased ? 'bg-[#2C3480]/18 text-white border border-[#2C3480]/45' : 'bg-[#2C3480]/20 text-[#3D48A8] border border-[#2C3480]/45'} text-xs font-tech font-bold uppercase inline-block mt-1">
             ${idp.isReleased ? 'CREDENTIALS RELEASED' : 'PENDING 15-MIN RELEASE'}
           </span>
         </div>
@@ -1699,10 +1798,10 @@ function renderIdpPortal() {
 
       <!-- IDP CREDENTIALS BOX -->
       ${!user ? `
-        <div class="bg-slate-900/90 p-8 rounded-xl border border-slate-800 text-center">
-          <i class="fa-solid fa-lock text-3xl text-amber-400 mb-2"></i>
+        <div class="bg-[#060810]/95 p-8 rounded-xl border border-white/10 text-center">
+          <i class="fa-solid fa-lock text-3xl text-[#3D48A8] mb-2"></i>
           <h4 class="font-heading font-bold text-lg text-white mb-1">CAPTAIN LOGIN REQUIRED</h4>
-          <p class="text-xs text-slate-400 max-w-md mx-auto mb-4 font-tech">
+          <p class="text-xs text-white/50 max-w-md mx-auto mb-4 font-tech">
             Custom room ID & Password are only accessible by the 12 verified Captains of today's scheduled group.
           </p>
           <button onclick="openAuthModal()" class="btn-esports-primary px-6 py-2.5 rounded-lg font-heading font-bold text-xs uppercase">
@@ -1710,10 +1809,10 @@ function renderIdpPortal() {
           </button>
         </div>
       ` : !userReg ? `
-        <div class="bg-slate-900/90 p-8 rounded-xl border border-slate-800 text-center">
+        <div class="bg-[#060810]/95 p-8 rounded-xl border border-white/10 text-center">
           <i class="fa-solid fa-ban text-3xl text-red-400 mb-2"></i>
           <h4 class="font-heading font-bold text-lg text-white mb-1">SQUAD NOT REGISTERED</h4>
-          <p class="text-xs text-slate-400 max-w-md mx-auto mb-4 font-tech">
+          <p class="text-xs text-white/50 max-w-md mx-auto mb-4 font-tech">
             You are logged in as @${user.username}, but your squad is not registered for Free Fire Weekly Wars Season 12.
           </p>
           <a href="#register" data-route="register" class="btn-esports-primary px-6 py-2.5 rounded-lg font-heading font-bold text-xs uppercase inline-block">
@@ -1721,33 +1820,33 @@ function renderIdpPortal() {
           </a>
         </div>
       ` : isEligibleToday ? `
-        <div class="bg-gradient-to-r from-emerald-950/40 via-slate-900 to-emerald-950/40 p-6 sm:p-8 rounded-xl border border-emerald-500/50 shadow-2xl">
-          <div class="flex items-center gap-3 text-emerald-400 font-tech font-bold text-xs uppercase mb-4">
+        <div class="bg-gradient-to-r from-[#080A18] via-[#04040A] to-[#080A18] p-6 sm:p-8 rounded-xl border border-[#2C3480]/50 shadow-2xl">
+          <div class="flex items-center gap-3 text-white font-tech font-bold text-xs uppercase mb-4">
             <i class="fa-solid fa-circle-check text-base"></i>
             <span>ACCESS GRANTED: Captain of "${userReg.teamName}" (Assigned Slot #${userReg.slotNumber})</span>
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-            <div class="bg-slate-950 p-5 rounded-xl border border-amber-500/40 text-center">
-              <span class="text-xs font-tech text-slate-400 uppercase tracking-widest block mb-1">CUSTOM ROOM ID</span>
-              <div class="text-3xl sm:text-4xl font-display font-black text-amber-400 tracking-wider my-2" id="idp-room-id">${idp.roomId || '8492019'}</div>
+            <div class="bg-[#030508] p-5 rounded-xl border border-[#2C3480]/45 text-center">
+              <span class="text-xs font-tech text-white/50 uppercase tracking-widest block mb-1">CUSTOM ROOM ID</span>
+              <div class="text-3xl sm:text-4xl font-display font-black text-[#3D48A8] tracking-wider my-2" id="idp-room-id">${idp.roomId || '8492019'}</div>
               <button onclick="copyToClipboard('${idp.roomId || '8492019'}', 'Room ID copied!')" class="btn-esports-secondary px-4 py-1.5 rounded-md text-xs font-tech font-bold uppercase inline-flex items-center gap-1.5">
-                <i class="fa-solid fa-copy text-amber-400"></i> Copy Room ID
+                <i class="fa-solid fa-copy text-[#3D48A8]"></i> Copy Room ID
               </button>
             </div>
 
-            <div class="bg-slate-950 p-5 rounded-xl border border-amber-500/40 text-center">
-              <span class="text-xs font-tech text-slate-400 uppercase tracking-widest block mb-1">ROOM PASSWORD</span>
+            <div class="bg-[#030508] p-5 rounded-xl border border-[#2C3480]/45 text-center">
+              <span class="text-xs font-tech text-white/50 uppercase tracking-widest block mb-1">ROOM PASSWORD</span>
               <div class="text-3xl sm:text-4xl font-display font-black text-white tracking-wider my-2" id="idp-room-pass">${idp.roomPass || 'IP777'}</div>
               <button onclick="copyToClipboard('${idp.roomPass || 'IP777'}', 'Password copied!')" class="btn-esports-secondary px-4 py-1.5 rounded-md text-xs font-tech font-bold uppercase inline-flex items-center gap-1.5">
-                <i class="fa-solid fa-copy text-amber-400"></i> Copy Password
+                <i class="fa-solid fa-copy text-[#3D48A8]"></i> Copy Password
               </button>
             </div>
           </div>
 
-          <div class="bg-slate-950/80 p-4 rounded-xl border border-slate-800 text-xs font-tech text-slate-300 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div class="bg-[#030508]/80 p-4 rounded-xl border border-white/10 text-xs font-tech text-white/70 flex flex-col sm:flex-row items-center justify-between gap-3">
             <div>
-              <span class="text-amber-400 font-bold block mb-0.5">SLOT DISCIPLINE:</span>
+              <span class="text-[#3D48A8] font-bold block mb-0.5">SLOT DISCIPLINE:</span>
               <span>You must sit strictly in <strong>Slot #${userReg.slotNumber}</strong> with your 4 verified players. Gun Attributes are OFF.</span>
             </div>
             <a href="https://chat.whatsapp.com/invite/sample" target="_blank" class="px-4 py-2 rounded-lg bg-emerald-600 text-white font-bold hover:bg-emerald-500 transition-colors flex items-center gap-1.5 text-xs">
@@ -1756,18 +1855,18 @@ function renderIdpPortal() {
           </div>
         </div>
       ` : `
-        <div class="bg-slate-900/90 p-8 rounded-xl border border-red-500/30 text-center">
+        <div class="bg-[#060810]/95 p-8 rounded-xl border border-white/10 text-center">
           <div class="w-12 h-12 mx-auto mb-3 rounded-full bg-red-600/20 border border-red-500 flex items-center justify-center text-red-400 text-xl">
             <i class="fa-solid fa-lock"></i>
           </div>
-          <h4 class="font-heading font-bold text-xl text-white mb-1">ACCESS LOCKED — NOT YOUR MATCH DAY</h4>
-          <p class="text-xs text-slate-300 max-w-lg mx-auto leading-relaxed mb-4 font-tech">
-            Your squad <strong class="text-amber-400">"${userReg.teamName}"</strong> is scheduled for <strong class="text-white">${userReg.group}</strong> (${userReg.matchDay}).
+          <h4 class="font-heading font-bold text-xl text-white mb-1">ACCESS LOCKED â€” NOT YOUR MATCH DAY</h4>
+          <p class="text-xs text-white/70 max-w-lg mx-auto leading-relaxed mb-4 font-tech">
+            Your squad <strong class="text-[#3D48A8]">"${userReg.teamName}"</strong> is scheduled for <strong class="text-white">${userReg.group}</strong> (${userReg.matchDay}).
             <br>
-            Today's custom room credentials are strictly accessible only by the 12 Captains of <strong class="text-amber-400">${activeDayTitle}</strong>. Your IDP will unlock on your match day!
+            Today's custom room credentials are strictly accessible only by the 12 Captains of <strong class="text-[#3D48A8]">${activeDayTitle}</strong>. Your IDP will unlock on your match day!
           </p>
-          <div class="inline-flex items-center gap-2 bg-slate-950 px-4 py-2 rounded-lg border border-slate-800 text-xs font-tech text-slate-400">
-            <i class="fa-regular fa-calendar-check text-amber-400"></i>
+          <div class="inline-flex items-center gap-2 bg-[#030508] px-4 py-2 rounded-lg border border-white/10 text-xs font-tech text-white/50">
+            <i class="fa-regular fa-calendar-check text-[#3D48A8]"></i>
             <span>Your Assigned Slot: <strong class="text-white">#${userReg.slotNumber}</strong> | Match Day: <strong class="text-white">${userReg.matchDay}</strong></span>
           </div>
         </div>
@@ -1776,18 +1875,18 @@ function renderIdpPortal() {
 
     <!-- Today's 12 Registered Squads List -->
     <div class="glass-panel rounded-2xl overflow-hidden border border-white/10">
-      <div class="p-4 bg-slate-900/90 border-b border-white/10 flex justify-between items-center">
+      <div class="p-4 bg-[#060810]/95 border-b border-white/10 flex justify-between items-center">
         <div>
           <h3 class="font-heading font-bold text-sm text-white">Today's 12 Squads: ${activeDayTitle}</h3>
-          <span class="text-xs font-tech text-slate-400">Authorized squads in today's custom room</span>
+          <span class="text-xs font-tech text-white/50">Authorized squads in today's custom room</span>
         </div>
-        <span class="text-xs font-tech text-amber-400 font-bold">${activeDaySquads.length}/12 Slots Filled</span>
+        <span class="text-xs font-tech text-[#3D48A8] font-bold">${activeDaySquads.length}/12 Slots Filled</span>
       </div>
 
       <div class="overflow-x-auto">
         <table class="w-full text-left border-collapse">
           <thead>
-            <tr class="bg-slate-950 text-xs font-tech text-slate-400 uppercase tracking-wider border-b border-slate-800">
+            <tr class="bg-[#030508] text-xs font-tech text-white/50 uppercase tracking-wider border-b border-white/10">
               <th class="py-3 px-4">SLOT</th>
               <th class="py-3 px-4">TEAM NAME</th>
               <th class="py-3 px-4">CAPTAIN IGN</th>
@@ -1798,16 +1897,16 @@ function renderIdpPortal() {
           <tbody class="divide-y divide-slate-800/60 font-tech text-xs">
             ${activeDaySquads.length === 0 ? `
               <tr>
-                <td colspan="5" class="py-8 text-center text-slate-500 font-tech">No squads registered in this group yet.</td>
+                <td colspan="5" class="py-8 text-center text-white/40 font-tech">No squads registered in this group yet.</td>
               </tr>
             ` : activeDaySquads.map(s => `
-              <tr class="border-b border-slate-800/80 hover:bg-slate-900/50">
-                <td class="py-3 px-4 font-bold text-amber-400">#${s.slotNumber}</td>
-                <td class="py-3 px-4 font-heading font-bold text-white text-sm">${s.teamName} <span class="text-slate-500 font-normal">(${s.teamTag})</span></td>
+              <tr class="border-b border-white/10/80 hover:bg-slate-900/50">
+                <td class="py-3 px-4 font-bold text-[#3D48A8]">#${s.slotNumber}</td>
+                <td class="py-3 px-4 font-heading font-bold text-white text-sm">${s.teamName} <span class="text-white/40 font-normal">(${s.teamTag})</span></td>
                 <td class="py-3 px-4 text-slate-200">${s.captainIgn}</td>
-                <td class="py-3 px-4 text-amber-400">@${s.iglUsername}</td>
+                <td class="py-3 px-4 text-[#3D48A8]">@${s.iglUsername}</td>
                 <td class="py-3 px-4">
-                  <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 text-[10px] font-bold border border-emerald-500/40">
+                  <span class="px-2 py-0.5 rounded bg-[#2C3480]/18 text-white text-[10px] font-bold border border-[#2C3480]/45">
                     MATCH READY
                   </span>
                 </td>
@@ -1835,76 +1934,76 @@ function renderPassModal(reg) {
   if (!modal || !body) return;
 
   body.innerHTML = `
-    <div id="printable-pass" class="pass-ticket p-6 rounded-2xl relative overflow-hidden text-left border-2 border-amber-500 shadow-2xl">
+    <div id="printable-pass" class="pass-ticket p-6 rounded-2xl relative overflow-hidden text-left border-2 border-[#2C3480] shadow-2xl">
       <div class="flex justify-between items-start border-b border-white/10 pb-4 mb-4">
         <div class="flex items-center gap-3">
           <img src="assets/images/logo.png" alt="Insane Power Esports" class="w-12 h-12 object-contain">
           <div>
-            <h3 class="font-display font-extrabold text-xl text-amber-400">INSANE POWER ESPORTS</h3>
-            <span class="text-xs font-tech text-slate-400">OFFICIAL 48-SLOT WEEKLY WAR MATCH PASS</span>
+            <h3 class="font-display font-extrabold text-xl text-[#3D48A8]">INSANE POWER ESPORTS</h3>
+            <span class="text-xs font-tech text-white/50">OFFICIAL 48-SLOT WEEKLY WAR MATCH PASS</span>
           </div>
         </div>
         <div class="text-right">
-          <span class="px-2.5 py-1 bg-emerald-500/20 text-emerald-400 text-xs font-tech font-bold uppercase rounded-md border border-emerald-500/40">
+          <span class="px-2.5 py-1 bg-[#2C3480]/18 text-white text-xs font-tech font-bold uppercase rounded-md border border-[#2C3480]/45">
             ${reg.status}
           </span>
-          <div class="text-xs font-tech text-slate-400 mt-1">PASS ID: <strong class="text-white">${reg.regId}</strong></div>
+          <div class="text-xs font-tech text-white/50 mt-1">PASS ID: <strong class="text-white">${reg.regId}</strong></div>
         </div>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <div class="md:col-span-2 space-y-3">
           <div>
-            <span class="text-xs text-slate-400 font-tech uppercase">EVENT</span>
+            <span class="text-xs text-white/50 font-tech uppercase">EVENT</span>
             <div class="text-base font-heading font-extrabold text-white">${reg.tourneyName}</div>
           </div>
 
-          <div class="grid grid-cols-2 gap-3 bg-slate-900/80 p-3 rounded-xl border border-slate-800">
+          <div class="grid grid-cols-2 gap-3 bg-[#060810]/90 p-3 rounded-xl border border-white/10">
             <div>
-              <span class="text-xs text-slate-400 font-tech uppercase">TEAM NAME</span>
-              <div class="text-sm font-heading font-bold text-amber-300">${reg.teamName} [${reg.teamTag}]</div>
+              <span class="text-xs text-white/50 font-tech uppercase">TEAM NAME</span>
+              <div class="text-sm font-heading font-bold text-white/80">${reg.teamName} [${reg.teamTag}]</div>
             </div>
             <div>
-              <span class="text-xs text-slate-400 font-tech uppercase">SCHEDULED MATCH DAY</span>
+              <span class="text-xs text-white/50 font-tech uppercase">SCHEDULED MATCH DAY</span>
               <div class="text-sm font-heading font-bold text-slate-200">${reg.matchDay}</div>
             </div>
           </div>
 
           <div>
-            <span class="text-xs text-slate-400 font-tech uppercase block mb-1">VERIFIED FREE FIRE ROSTER</span>
-            <div class="grid grid-cols-2 gap-1.5 text-xs text-slate-300 font-tech">
+            <span class="text-xs text-white/50 font-tech uppercase block mb-1">VERIFIED FREE FIRE ROSTER</span>
+            <div class="grid grid-cols-2 gap-1.5 text-xs text-white/70 font-tech">
               ${reg.players.map(p => `
-                <div class="bg-slate-950/60 px-2.5 py-1.5 rounded-lg border border-slate-800/80 flex justify-between">
+                <div class="bg-[#030508]/60 px-2.5 py-1.5 rounded-lg border border-white/10/80 flex justify-between">
                   <span>${p.ign} (@${p.username})</span>
-                  <span class="text-amber-400 font-semibold">${p.uid}</span>
+                  <span class="text-[#3D48A8] font-semibold">${p.uid}</span>
                 </div>
               `).join('')}
             </div>
           </div>
         </div>
 
-        <div class="bg-slate-950/90 p-4 rounded-xl border border-amber-500/30 flex flex-col items-center justify-center text-center">
-          <div class="text-xs font-tech text-slate-400 uppercase font-semibold">ASSIGNED SLOT</div>
-          <div class="text-4xl font-display font-black text-amber-400 my-1">#${reg.slotNumber}</div>
-          <div class="text-xs font-tech font-bold text-amber-200 px-2 py-0.5 bg-amber-500/20 rounded-md border border-amber-500/30 mb-3">
+        <div class="bg-[#030508]/90 p-4 rounded-xl border border-[#2C3480]/40 flex flex-col items-center justify-center text-center">
+          <div class="text-xs font-tech text-white/50 uppercase font-semibold">ASSIGNED SLOT</div>
+          <div class="text-4xl font-display font-black text-[#3D48A8] my-1">#${reg.slotNumber}</div>
+          <div class="text-xs font-tech font-bold text-white/70 px-2 py-0.5 bg-[#2C3480]/20 rounded-md border border-[#2C3480]/40 mb-3">
             ${reg.group}
           </div>
 
           <div class="bg-white p-2 rounded-lg shadow-md mb-2">
             <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=IP-FF-WAR-${reg.regId}-SLOT${reg.slotNumber}" alt="Pass QR" class="w-16 h-16">
           </div>
-          <span class="text-[10px] text-slate-400 font-tech">SCAN FOR ENTRY</span>
+          <span class="text-[10px] text-white/50 font-tech">SCAN FOR ENTRY</span>
         </div>
       </div>
 
-      <div class="bg-amber-500/10 border-l-4 border-amber-400 p-3 rounded-lg text-xs text-slate-300 mb-6 font-tech">
-        <p class="font-bold text-amber-300 mb-0.5"><i class="fa-solid fa-bell mr-1"></i> ID & PASSWORD RELEASE NOTICE:</p>
+      <div class="bg-[#2C3480]/12 border-l-4 border-[#2C3480] p-3 rounded-lg text-xs text-white/70 mb-6 font-tech">
+        <p class="font-bold text-white/80 mb-0.5"><i class="fa-solid fa-bell mr-1"></i> ID & PASSWORD RELEASE NOTICE:</p>
         <p>Your Room ID & Password will unlock on the website's IDP page 15 minutes before your group's match time (${reg.matchDay}). Sit strictly in Slot #${reg.slotNumber}.</p>
       </div>
 
-      <div class="flex flex-wrap gap-3 justify-between items-center pt-2 border-t border-slate-800">
-        <a href="https://chat.whatsapp.com/invite/sample" target="_blank" class="px-4 py-2 rounded-lg text-xs font-heading font-bold bg-emerald-600/20 text-emerald-400 border border-emerald-500/40 hover:bg-emerald-600/30 flex items-center gap-2">
-          <i class="fa-brands fa-whatsapp text-emerald-400"></i> Join WhatsApp Slot Group
+      <div class="flex flex-wrap gap-3 justify-between items-center pt-2 border-t border-white/10">
+        <a href="https://chat.whatsapp.com/invite/sample" target="_blank" class="px-4 py-2 rounded-lg text-xs font-heading font-bold bg-emerald-600/20 text-white border border-emerald-500/40 hover:bg-emerald-600/30 flex items-center gap-2">
+          <i class="fa-brands fa-whatsapp text-white"></i> Join WhatsApp Slot Group
         </a>
         <button onclick="window.print()" class="btn-esports-primary px-5 py-2 rounded-lg text-xs font-heading font-bold flex items-center gap-2">
           <i class="fa-solid fa-print"></i> Print / Download Pass
@@ -1913,12 +2012,11 @@ function renderPassModal(reg) {
     </div>
   `;
 
-  modal.classList.remove('hidden');
+  openMotionModal(modal);
 }
 
 function closePassModal() {
-  const modal = document.getElementById('pass-modal');
-  if (modal) modal.classList.add('hidden');
+  closeMotionModal(document.getElementById('pass-modal'));
 }
 
 // ==================== POINTS TABLE / LEADERBOARD ====================
@@ -1936,19 +2034,20 @@ function renderLeaderboard() {
   if (!isPublished || (!imageUrl && (!standings || standings.length === 0))) {
     container.innerHTML = `
       <div class="glass-panel p-12 text-center rounded-2xl border border-white/10">
-        <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 text-2xl">
+        <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-[#2C3480]/12 border border-[#2C3480]/40 flex items-center justify-center text-[#3D48A8] text-2xl">
           <i class="fa-solid fa-clock-rotate-left"></i>
         </div>
         <h3 class="font-display font-extrabold text-2xl text-white mb-2">POINTS TABLE WILL BE UPLOADED AFTER MATCHES</h3>
-        <p class="text-slate-400 text-xs sm:text-sm max-w-lg mx-auto leading-relaxed">
+        <p class="text-white/50 text-xs sm:text-sm max-w-lg mx-auto leading-relaxed">
           Matches for the current weekly cycle are underway. Official standings, Booyahs, Kill Points, and the tournament MVP leaderboard will be published right here after all 4 match days conclude.
         </p>
-        <div class="mt-6 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-slate-900 border border-slate-800 text-xs font-tech text-amber-400">
-          <span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
+        <div class="mt-6 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#060810] border border-white/10 text-xs font-tech text-[#3D48A8]">
+          <span class="w-2 h-2 rounded-full bg-[#3D48A8] animate-ping"></span>
           <span>Scoring Standard: Official Free Fire Esports Rulebook</span>
         </div>
       </div>
     `;
+    window.ipRefreshMotion?.();
     return;
   }
 
@@ -1956,7 +2055,7 @@ function renderLeaderboard() {
     <!-- HEADER -->
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
       <div>
-        <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/20 text-amber-400 text-xs font-tech font-bold uppercase border border-amber-500/40">
+        <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#2C3480]/20 text-[#3D48A8] text-xs font-tech font-bold uppercase border border-[#2C3480]/45">
           <i class="fa-solid fa-trophy"></i> OFFICIAL STANDINGS
         </span>
         <h2 class="font-display font-black text-2xl sm:text-3xl text-white mt-1">${season}</h2>
@@ -1964,7 +2063,7 @@ function renderLeaderboard() {
       ${imageUrl ? `
         <div class="flex items-center gap-2">
           <a href="${imageUrl}" target="_blank" download="InsanePower_PointsTable.png" class="btn-esports-secondary px-4 py-2 rounded-lg text-xs font-tech font-bold uppercase inline-flex items-center gap-1.5 shadow-md">
-            <i class="fa-solid fa-download text-amber-400"></i> Download
+            <i class="fa-solid fa-download text-[#3D48A8]"></i> Download
           </a>
           <a href="${imageUrl}" target="_blank" class="btn-esports-primary px-4 py-2 rounded-lg text-xs font-tech font-bold uppercase inline-flex items-center gap-1.5 shadow-md">
             <i class="fa-solid fa-expand"></i> View Fullscreen
@@ -1975,49 +2074,49 @@ function renderLeaderboard() {
 
     ${imageUrl ? `
       <!-- UPLOADED POINTS TABLE IMAGE GRAPHIC -->
-      <div class="glass-panel p-4 sm:p-6 rounded-2xl border border-amber-500/40 mb-8 shadow-2xl relative overflow-hidden bg-slate-950/80">
-        <div class="flex items-center justify-between text-xs font-tech text-amber-400 uppercase font-bold mb-3 px-1">
+      <div class="glass-panel p-4 sm:p-6 rounded-2xl border border-[#2C3480]/45 mb-8 shadow-2xl relative overflow-hidden bg-[#030508]/80">
+        <div class="flex items-center justify-between text-xs font-tech text-[#3D48A8] uppercase font-bold mb-3 px-1">
           <span class="flex items-center gap-1.5">
-            <i class="fa-solid fa-circle-check text-emerald-400"></i> OFFICIAL MATCH RESULT SCOREBOARD
+            <i class="fa-solid fa-circle-check text-white"></i> OFFICIAL MATCH RESULT SCOREBOARD
           </span>
-          <span class="text-slate-400 text-[11px] font-normal hidden sm:inline">Click image to open high-resolution view</span>
+          <span class="text-white/50 text-[11px] font-normal hidden sm:inline">Click image to open high-resolution view</span>
         </div>
-        <a href="${imageUrl}" target="_blank" class="block cursor-zoom-in group rounded-xl overflow-hidden border border-slate-800 bg-black/90 hover:border-amber-500/50 transition-colors">
+        <a href="${imageUrl}" target="_blank" class="block cursor-zoom-in group rounded-xl overflow-hidden border border-white/10 bg-black/90 hover:border-[#2C3480]/50 transition-colors">
           <img src="${imageUrl}" alt="Official Points Table" class="w-full h-auto object-contain rounded-xl max-h-[850px] mx-auto group-hover:scale-[1.005] transition-transform duration-300">
         </a>
       </div>
     ` : ''}
 
     ${mvp ? `
-      <div class="glass-panel p-6 border border-amber-500/30 rounded-2xl relative overflow-hidden flex flex-col sm:flex-row items-center justify-between gap-6 mb-8">
+      <div class="glass-panel p-6 border border-[#2C3480]/40 rounded-2xl relative overflow-hidden flex flex-col sm:flex-row items-center justify-between gap-6 mb-8">
         <div class="flex items-center gap-4">
-          <div class="w-14 h-14 rounded-full border-2 border-amber-400 p-1 bg-slate-900 overflow-hidden relative">
+          <div class="w-14 h-14 rounded-full border-2 border-[#2C3480] p-1 bg-[#060810] overflow-hidden relative">
             <img src="assets/images/logo.png" alt="${mvp.name || mvp.ign}" class="w-full h-full object-contain rounded-full">
-            <div class="absolute bottom-0 right-0 bg-amber-400 text-black text-[9px] font-black px-1 rounded-full font-tech">MVP</div>
+            <div class="absolute bottom-0 right-0 bg-[#2C3480] text-white text-[9px] font-black px-1 rounded-full font-tech">MVP</div>
           </div>
           <div>
-            <span class="text-xs font-tech text-amber-400 uppercase tracking-widest block font-bold">WEEKLY WAR TOURNAMENT MVP</span>
+            <span class="text-xs font-tech text-[#3D48A8] uppercase tracking-widest block font-bold">WEEKLY WAR TOURNAMENT MVP</span>
             <h3 class="text-xl font-heading font-extrabold text-white">${mvp.name || mvp.ign}</h3>
-            <span class="text-xs font-tech text-slate-400">${mvp.team}</span>
+            <span class="text-xs font-tech text-white/50">${mvp.team}</span>
           </div>
         </div>
 
-        <div class="grid grid-cols-4 gap-3 text-center bg-slate-900/80 px-4 py-2.5 rounded-xl border border-slate-800">
+        <div class="grid grid-cols-4 gap-3 text-center bg-[#060810]/90 px-4 py-2.5 rounded-xl border border-white/10">
           <div>
-            <span class="text-[10px] text-slate-400 font-tech">KILLS</span>
-            <div class="text-base font-heading font-extrabold text-amber-400">${mvp.kills}</div>
+            <span class="text-[10px] text-white/50 font-tech">KILLS</span>
+            <div class="text-base font-heading font-extrabold text-[#3D48A8]">${mvp.kills}</div>
           </div>
           <div>
-            <span class="text-[10px] text-slate-400 font-tech">DAMAGE</span>
+            <span class="text-[10px] text-white/50 font-tech">DAMAGE</span>
             <div class="text-base font-heading font-extrabold text-slate-100">${mvp.damage}</div>
           </div>
           <div>
-            <span class="text-[10px] text-slate-400 font-tech">MATCHES</span>
+            <span class="text-[10px] text-white/50 font-tech">MATCHES</span>
             <div class="text-base font-heading font-extrabold text-slate-100">${mvp.matches || 4}</div>
           </div>
           <div>
-            <span class="text-[10px] text-slate-400 font-tech">RATING</span>
-            <div class="text-base font-heading font-extrabold text-emerald-400">${mvp.rating || '9.8'}</div>
+            <span class="text-[10px] text-white/50 font-tech">RATING</span>
+            <div class="text-base font-heading font-extrabold text-white">${mvp.rating || '9.8'}</div>
           </div>
         </div>
       </div>
@@ -2028,7 +2127,7 @@ function renderLeaderboard() {
         <div class="overflow-x-auto">
           <table class="w-full text-left border-collapse">
             <thead>
-              <tr class="bg-slate-950 text-xs font-tech text-slate-400 uppercase tracking-wider border-b border-slate-800">
+              <tr class="bg-[#030508] text-xs font-tech text-white/50 uppercase tracking-wider border-b border-white/10">
                 <th class="py-3.5 px-4 text-center">RANK</th>
                 <th class="py-3.5 px-4">TEAM NAME</th>
                 <th class="py-3.5 px-4 text-center">MATCHES</th>
@@ -2040,31 +2139,31 @@ function renderLeaderboard() {
             </thead>
             <tbody class="divide-y divide-slate-800/60 font-tech text-xs">
               ${standings.map(s => {
-                let rankBadge = `<span class="font-tech font-bold text-slate-400">#${s.rank}</span>`;
+                let rankBadge = `<span class="font-tech font-bold text-white/50">#${s.rank}</span>`;
                 let rowClass = "leaderboard-row";
 
                 if (s.rank === 1) {
-                  rankBadge = `<span class="w-6 h-6 rounded-full bg-amber-400 text-black font-tech font-extrabold inline-flex items-center justify-center">1</span>`;
+                  rankBadge = `<span class="w-6 h-6 rounded-full bg-[#2C3480] text-white font-tech font-extrabold inline-flex items-center justify-center">1</span>`;
                   rowClass += " rank-1";
                 } else if (s.rank === 2) {
                   rankBadge = `<span class="w-6 h-6 rounded-full bg-slate-300 text-black font-tech font-extrabold inline-flex items-center justify-center">2</span>`;
                   rowClass += " rank-2";
                 } else if (s.rank === 3) {
-                  rankBadge = `<span class="w-6 h-6 rounded-full bg-amber-700 text-white font-tech font-extrabold inline-flex items-center justify-center">3</span>`;
+                  rankBadge = `<span class="w-6 h-6 rounded-full bg-[#0C0D24] text-white/70 border border-white/15 font-tech font-extrabold inline-flex items-center justify-center">3</span>`;
                   rowClass += " rank-3";
                 }
 
                 return `
-                  <tr class="${rowClass}">
+                  <tr class="${rowClass} reveal-item" data-reveal>
                     <td class="py-3 px-4 text-center">${rankBadge}</td>
                     <td class="py-3 px-4 font-heading font-bold text-slate-100 text-sm">
                       ${s.team}
                     </td>
-                    <td class="py-3 px-4 text-center text-slate-300">${s.matches}</td>
-                    <td class="py-3 px-4 text-center text-amber-400 font-bold">${s.booyahs || 0}</td>
-                    <td class="py-3 px-4 text-center text-slate-300">${s.placePts}</td>
-                    <td class="py-3 px-4 text-center text-slate-300">${s.killPts}</td>
-                    <td class="py-3 px-4 text-center font-extrabold text-amber-400 text-sm bg-slate-900/30">${s.totalPts}</td>
+                    <td class="py-3 px-4 text-center text-white/70">${s.matches}</td>
+                    <td class="py-3 px-4 text-center text-[#3D48A8] font-bold">${s.booyahs || 0}</td>
+                    <td class="py-3 px-4 text-center text-white/70">${s.placePts}</td>
+                    <td class="py-3 px-4 text-center text-white/70">${s.killPts}</td>
+                    <td class="py-3 px-4 text-center font-extrabold text-[#3D48A8] text-sm bg-slate-900/30">${s.totalPts}</td>
                   </tr>
                 `;
               }).join('')}
@@ -2074,6 +2173,7 @@ function renderLeaderboard() {
       </div>
     ` : ''}
   `;
+  window.ipRefreshMotion?.();
 }
 
 // ==================== RULES & FAQS ====================
@@ -2083,11 +2183,11 @@ function renderFaqs() {
 
   container.innerHTML = IP_DATA.faqs.map((faq, idx) => `
     <div class="glass-panel rounded-xl border border-white/10 p-4 transition-all">
-      <button class="w-full flex justify-between items-center text-left font-heading font-bold text-sm text-slate-200 hover:text-amber-400" onclick="toggleFaq(${idx})">
+      <button class="w-full flex justify-between items-center text-left font-heading font-bold text-sm text-slate-200 hover:text-[#3D48A8]" onclick="toggleFaq(${idx})">
         <span>${faq.q}</span>
-        <i id="faq-icon-${idx}" class="fa-solid fa-chevron-down text-xs text-amber-400 transition-transform duration-300"></i>
+        <i id="faq-icon-${idx}" class="fa-solid fa-chevron-down text-xs text-[#3D48A8] transition-transform duration-300"></i>
       </button>
-      <div id="faq-ans-${idx}" class="hidden mt-3 pt-3 border-t border-slate-800 text-xs text-slate-300 font-tech leading-relaxed">
+      <div id="faq-ans-${idx}" class="hidden mt-3 pt-3 border-t border-white/10 text-xs text-white/70 font-tech leading-relaxed">
         ${faq.a}
       </div>
     </div>
@@ -2123,7 +2223,7 @@ window.quickAdminLogin = function() {
       username: "akshith_admin",
       name: "Akshith Reddy",
       email: "akshithreddypalvai2005@gmail.com",
-      ign: "IP・AKSHITH",
+      ign: "IPãƒ»AKSHITH",
       uid: "1000000001",
       phone: "+91 98765 00000",
       authProvider: "google",
@@ -2215,25 +2315,25 @@ function renderAdminPortal() {
   if (!isAdmin) {
     // Show ACCESS RESTRICTED SCREEN
     container.innerHTML = `
-      <div class="glass-panel p-8 sm:p-12 text-center rounded-2xl border border-red-500/40 max-w-xl mx-auto my-8">
-        <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-red-500/20 border border-red-500/50 flex items-center justify-center text-red-400 text-2xl">
+      <div class="glass-panel p-8 sm:p-12 text-center rounded-2xl border border-white/15 max-w-xl mx-auto my-8">
+        <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-white/08 border border-red-500/50 flex items-center justify-center text-red-400 text-2xl">
           <i class="fa-solid fa-user-shield"></i>
         </div>
-        <span class="px-3 py-1 bg-red-500/20 text-red-400 border border-red-500/30 rounded-full text-[11px] font-tech font-bold uppercase tracking-wider">
+        <span class="px-3 py-1 bg-white/08 text-red-400 border border-white/10 rounded-full text-[11px] font-tech font-bold uppercase tracking-wider">
           Restricted Organizer Portal
         </span>
         <h2 class="font-display font-extrabold text-2xl sm:text-3xl text-white mt-3 mb-2">
           ADMIN ACCESS RESTRICTED
         </h2>
-        <p class="text-slate-300 text-xs sm:text-sm leading-relaxed mb-4">
+        <p class="text-white/70 text-xs sm:text-sm leading-relaxed mb-4">
           This Control Center is strictly confidential and reserved for official tournament organizers with authorized email addresses.
         </p>
 
-        <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 text-xs font-tech text-left mb-6">
-          <span class="text-slate-400 uppercase text-[10px] block font-semibold mb-2">AUTHORIZED ORGANIZER EMAILS:</span>
+        <div class="bg-[#030508] p-4 rounded-xl border border-white/10 text-xs font-tech text-left mb-6">
+          <span class="text-white/50 uppercase text-[10px] block font-semibold mb-2">AUTHORIZED ORGANIZER EMAILS:</span>
           <div class="flex flex-wrap gap-2">
             ${_authorizedAdminEmails.map(e => `
-              <span class="px-2.5 py-1 rounded bg-amber-500/10 text-amber-400 border border-amber-500/30 text-xs font-mono font-bold flex items-center gap-1.5">
+              <span class="px-2.5 py-1 rounded bg-[#2C3480]/12 text-[#3D48A8] border border-[#2C3480]/40 text-xs font-mono font-bold flex items-center gap-1.5">
                 <i class="fa-solid fa-envelope text-[10px]"></i> ${e}
               </span>
             `).join('')}
@@ -2241,7 +2341,7 @@ function renderAdminPortal() {
         </div>
 
         ${user ? `
-          <div class="bg-red-950/40 border border-red-500/40 p-3 rounded-lg text-xs font-tech text-red-300 mb-6">
+          <div class="bg-red-950/40 border border-white/15 p-3 rounded-lg text-xs font-tech text-red-300 mb-6">
             Currently logged in as: <strong>@${user.username}</strong> (${user.email || 'No email registered'}).
             <br>This account is not on the authorized organizer email list.
           </div>
@@ -2278,20 +2378,20 @@ function renderAdminPortal() {
   container.innerHTML = `
     <div class="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
       <div>
-        <span class="text-xs font-tech text-emerald-400 uppercase font-bold tracking-widest flex items-center gap-2">
-          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span class="text-xs font-tech text-white uppercase font-bold tracking-widest flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-[#3D48A8] animate-pulse"></span>
           VERIFIED ORGANIZER ACCESS
         </span>
         <h1 class="font-display font-black text-3xl text-white mt-1">
-          ADMIN <span class="text-amber-400">CONTROL CENTER</span>
+          ADMIN <span class="text-[#3D48A8]">CONTROL CENTER</span>
         </h1>
-        <p class="text-xs text-slate-400 font-tech mt-1">
-          Logged in as: <strong class="text-white">${user.name || user.username}</strong> (<strong class="text-amber-400">${user.email}</strong>)
+        <p class="text-xs text-white/50 font-tech mt-1">
+          Logged in as: <strong class="text-white">${user.name || user.username}</strong> (<strong class="text-[#3D48A8]">${user.email}</strong>)
         </p>
       </div>
 
       <div class="flex items-center gap-2">
-        <span class="px-3 py-1 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-lg text-xs font-tech font-bold">
+        <span class="px-3 py-1 bg-[#2C3480]/18 text-white border border-[#2C3480]/40 rounded-lg text-xs font-tech font-bold">
           <i class="fa-solid fa-shield-check mr-1"></i> HEAD ADMIN
         </span>
         <button onclick="logoutUser()" class="btn-esports-secondary px-3 py-1.5 rounded-lg text-xs font-tech text-red-400 hover:text-red-300">
@@ -2303,27 +2403,27 @@ function renderAdminPortal() {
     <div class="space-y-8">
 
       <!-- CARD 1: MANAGE AUTHORIZED ADMIN EMAILS -->
-      <div class="glass-panel p-6 sm:p-8 rounded-2xl border border-amber-500/40">
+      <div class="glass-panel p-6 sm:p-8 rounded-2xl border border-[#2C3480]/45">
         <div class="flex items-center justify-between mb-2">
           <h3 class="font-display font-bold text-xl text-white flex items-center gap-2">
-            <i class="fa-solid fa-envelope-circle-check text-amber-400"></i> Authorized Organizer Emails
+            <i class="fa-solid fa-envelope-circle-check text-[#3D48A8]"></i> Authorized Organizer Emails
           </h3>
-          <span class="text-xs font-tech text-slate-400">${_authorizedAdminEmails.length} Authorized</span>
+          <span class="text-xs font-tech text-white/50">${_authorizedAdminEmails.length} Authorized</span>
         </div>
-        <p class="text-xs text-slate-400 mb-5">
+        <p class="text-xs text-white/50 mb-5">
           Only users logging in with the email addresses below can view or control this Admin window. You can add more admin emails anytime.
         </p>
 
         <!-- Current Emails List -->
         <div class="flex flex-wrap gap-2.5 mb-6">
           ${_authorizedAdminEmails.map(e => `
-            <div class="bg-slate-900 border ${e.toLowerCase() === 'akshithreddypalvai2005@gmail.com' ? 'border-amber-500/50 bg-amber-500/10' : 'border-slate-700'} px-3 py-1.5 rounded-lg flex items-center gap-2 text-xs font-tech">
-              <i class="fa-solid fa-envelope ${e.toLowerCase() === 'akshithreddypalvai2005@gmail.com' ? 'text-amber-400' : 'text-slate-400'}"></i>
-              <span class="font-bold ${e.toLowerCase() === 'akshithreddypalvai2005@gmail.com' ? 'text-amber-300' : 'text-slate-200'}">${e}</span>
+            <div class="bg-[#060810] border ${e.toLowerCase() === 'akshithreddypalvai2005@gmail.com' ? 'border-[#2C3480]/50 bg-[#2C3480]/12' : 'border-white/12'} px-3 py-1.5 rounded-lg flex items-center gap-2 text-xs font-tech">
+              <i class="fa-solid fa-envelope ${e.toLowerCase() === 'akshithreddypalvai2005@gmail.com' ? 'text-[#3D48A8]' : 'text-white/50'}"></i>
+              <span class="font-bold ${e.toLowerCase() === 'akshithreddypalvai2005@gmail.com' ? 'text-white/80' : 'text-slate-200'}">${e}</span>
               ${e.toLowerCase() === 'akshithreddypalvai2005@gmail.com' ? `
-                <span class="text-[9px] bg-amber-500 text-black px-1.5 py-0.2 rounded font-bold uppercase">Primary</span>
+                <span class="text-[9px] bg-[#2C3480] text-white px-1.5 py-0.2 rounded font-bold uppercase">Primary</span>
               ` : `
-                <button onclick="handleRemoveAdminEmail('${e}')" class="text-slate-500 hover:text-red-400 transition-colors ml-1" title="Revoke Admin Access">
+                <button onclick="handleRemoveAdminEmail('${e}')" class="text-white/40 hover:text-red-400 transition-colors ml-1" title="Revoke Admin Access">
                   <i class="fa-solid fa-xmark"></i>
                 </button>
               `}
@@ -2332,13 +2432,13 @@ function renderAdminPortal() {
         </div>
 
         <!-- Add Email Form -->
-        <div class="bg-slate-950 p-4 rounded-xl border border-slate-800">
-          <label class="block text-xs font-tech text-slate-400 uppercase mb-2">
-            <i class="fa-solid fa-user-plus mr-1 text-amber-400"></i> Grant Admin Access to Another Email
+        <div class="bg-[#030508] p-4 rounded-xl border border-white/10">
+          <label class="block text-xs font-tech text-white/50 uppercase mb-2">
+            <i class="fa-solid fa-user-plus mr-1 text-[#3D48A8]"></i> Grant Admin Access to Another Email
           </label>
           <div class="flex flex-col sm:flex-row gap-2">
             <input type="email" id="new-admin-email-input" placeholder="e.g. co-organizer@gmail.com"
-              class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white text-xs font-tech focus:border-amber-400 focus:outline-none">
+              class="flex-1 bg-[#060810] border border-white/12 rounded-lg px-3 py-2 text-white text-xs font-tech focus:border-[#3D48A8] focus:outline-none">
             <button onclick="handleAddAdminEmail()" class="btn-esports-primary px-5 py-2 rounded-lg text-xs font-heading font-bold uppercase tracking-wider whitespace-nowrap">
               + Add Admin Email
             </button>
@@ -2349,17 +2449,17 @@ function renderAdminPortal() {
       <!-- CARD 2: IDP DISPATCH -->
       <div class="glass-panel p-6 sm:p-8 rounded-2xl border border-white/10">
         <h3 class="font-display font-bold text-xl text-white mb-2">
-          <i class="fa-solid fa-key text-amber-400 mr-2"></i> Day-Wise Room ID & Password Dispatch
+          <i class="fa-solid fa-key text-[#3D48A8] mr-2"></i> Day-Wise Room ID & Password Dispatch
         </h3>
-        <p class="text-xs text-slate-400 mb-6 font-normal">
+        <p class="text-xs text-white/50 mb-6 font-normal">
           Select which match day is active today and enter the Custom Room ID and Password. Only the 12 Captains assigned to the active day will receive access.
         </p>
 
         <form id="admin-idp-form" class="space-y-4">
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label class="block text-xs font-tech text-slate-400 uppercase mb-1">Active Match Day</label>
-              <select id="admin-idp-day" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white text-xs font-tech focus:border-amber-400 focus:outline-none">
+              <label class="block text-xs font-tech text-white/50 uppercase mb-1">Active Match Day</label>
+              <select id="admin-idp-day" class="w-full bg-[#060810] border border-white/12 rounded-lg p-2.5 text-white text-xs font-tech focus:border-[#3D48A8] focus:outline-none">
                 <option value="1">Day 1 - Group A (Slots 1 to 12)</option>
                 <option value="2">Day 2 - Group B (Slots 13 to 24)</option>
                 <option value="3">Day 3 - Group C (Slots 25 to 36)</option>
@@ -2367,25 +2467,25 @@ function renderAdminPortal() {
               </select>
             </div>
             <div>
-              <label class="block text-xs font-tech text-slate-400 uppercase mb-1">Scheduled Match Time</label>
-              <input type="text" id="admin-idp-time" placeholder="e.g. 6:00 PM IST" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white text-xs font-tech focus:border-amber-400 focus:outline-none">
+              <label class="block text-xs font-tech text-white/50 uppercase mb-1">Scheduled Match Time</label>
+              <input type="text" id="admin-idp-time" placeholder="e.g. 6:00 PM IST" class="w-full bg-[#060810] border border-white/12 rounded-lg p-2.5 text-white text-xs font-tech focus:border-[#3D48A8] focus:outline-none">
             </div>
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label class="block text-xs font-tech text-slate-400 uppercase mb-1">Custom Room ID</label>
-              <input type="text" id="admin-idp-room" placeholder="e.g. 8492019" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white text-xs font-tech focus:border-amber-400 focus:outline-none">
+              <label class="block text-xs font-tech text-white/50 uppercase mb-1">Custom Room ID</label>
+              <input type="text" id="admin-idp-room" placeholder="e.g. 8492019" class="w-full bg-[#060810] border border-white/12 rounded-lg p-2.5 text-white text-xs font-tech focus:border-[#3D48A8] focus:outline-none">
             </div>
             <div>
-              <label class="block text-xs font-tech text-slate-400 uppercase mb-1">Custom Room Password</label>
-              <input type="text" id="admin-idp-pass" placeholder="e.g. IP777" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white text-xs font-tech focus:border-amber-400 focus:outline-none">
+              <label class="block text-xs font-tech text-white/50 uppercase mb-1">Custom Room Password</label>
+              <input type="text" id="admin-idp-pass" placeholder="e.g. IP777" class="w-full bg-[#060810] border border-white/12 rounded-lg p-2.5 text-white text-xs font-tech focus:border-[#3D48A8] focus:outline-none">
             </div>
           </div>
 
           <div class="flex items-center gap-2 pt-2">
-            <input type="checkbox" id="admin-idp-release" class="w-4 h-4 rounded border-slate-700 text-amber-500 focus:ring-amber-400 bg-slate-900">
-            <label for="admin-idp-release" class="text-xs font-tech text-slate-300">Release ID & Password Immediately to Active 12 Captains</label>
+            <input type="checkbox" id="admin-idp-release" class="w-4 h-4 rounded border-white/12 text-[#2C3480] focus:ring-[#3D48A8] bg-[#060810]">
+            <label for="admin-idp-release" class="text-xs font-tech text-white/70">Release ID & Password Immediately to Active 12 Captains</label>
           </div>
 
           <button type="submit" class="btn-esports-primary py-3 px-6 rounded-lg font-heading font-bold text-xs uppercase tracking-wider">
@@ -2397,27 +2497,27 @@ function renderAdminPortal() {
       <!-- CARD 3: POINTS TABLE -->
       <div class="glass-panel p-6 sm:p-8 rounded-2xl border border-white/10">
         <h3 class="font-display font-bold text-xl text-white mb-2">
-          <i class="fa-solid fa-trophy text-amber-400 mr-2"></i> Post-Match Points Table Upload
+          <i class="fa-solid fa-trophy text-[#3D48A8] mr-2"></i> Post-Match Points Table Upload
         </h3>
-        <p class="text-xs text-slate-400 mb-6 font-normal">
+        <p class="text-xs text-white/50 mb-6 font-normal">
           Upload the points table graphic/image or enter standings after today's 12-squad matches conclude.
         </p>
 
         <form id="admin-points-form" class="space-y-4">
           <div>
-            <label class="block text-xs font-tech text-slate-400 uppercase mb-1">Tournament Edition Title</label>
-            <input type="text" id="admin-points-season" placeholder="e.g. FREE FIRE WEEKLY WARS - SEASON 12 FINALS" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white text-xs font-tech focus:border-amber-400 focus:outline-none">
+            <label class="block text-xs font-tech text-white/50 uppercase mb-1">Tournament Edition Title</label>
+            <input type="text" id="admin-points-season" placeholder="e.g. FREE FIRE WEEKLY WARS - SEASON 12 FINALS" class="w-full bg-[#060810] border border-white/12 rounded-lg p-2.5 text-white text-xs font-tech focus:border-[#3D48A8] focus:outline-none">
           </div>
 
           <!-- POINTS TABLE IMAGE UPLOAD SECTION -->
-          <div class="p-4 rounded-xl border-2 border-dashed border-amber-500/40 bg-slate-950/70 hover:border-amber-400 transition-colors" id="admin-points-dropzone">
+          <div class="p-4 rounded-xl border-2 border-dashed border-[#2C3480]/45 bg-[#030508]/70 hover:border-[#3D48A8] transition-colors" id="admin-points-dropzone">
             <div class="flex items-center justify-between mb-1.5">
-              <label class="block text-xs font-tech text-amber-400 uppercase font-bold">
+              <label class="block text-xs font-tech text-[#3D48A8] uppercase font-bold">
                 <i class="fa-solid fa-image mr-1.5"></i> Upload Points Table Image
               </label>
-              <span class="text-[10px] font-tech text-slate-400 uppercase">PNG, JPG, WEBP</span>
+              <span class="text-[10px] font-tech text-white/50 uppercase">PNG, JPG, WEBP</span>
             </div>
-            <p class="text-xs text-slate-400 mb-3 font-normal">
+            <p class="text-xs text-white/50 mb-3 font-normal">
               Select or drop your points table image graphic. It will be published live in high definition on the official Points Table page!
             </p>
 
@@ -2429,64 +2529,64 @@ function renderAdminPortal() {
               <button type="button" id="admin-points-image-clear-btn" class="hidden btn-esports-secondary px-3.5 py-2 rounded-lg text-xs font-tech text-red-400 font-bold uppercase inline-flex items-center gap-1.5">
                 <i class="fa-solid fa-trash-can"></i> Remove Image
               </button>
-              <span id="admin-points-image-status" class="text-xs font-tech text-slate-400">No image selected</span>
+              <span id="admin-points-image-status" class="text-xs font-tech text-white/50">No image selected</span>
             </div>
 
             <!-- Image Preview Box -->
-            <div id="admin-points-image-preview-container" class="hidden mt-4 pt-3 border-t border-slate-800">
-              <div class="text-[11px] font-tech text-slate-400 mb-2 flex items-center justify-between">
-                <span><i class="fa-solid fa-eye text-amber-400 mr-1"></i> Image Preview:</span>
-                <span id="admin-points-image-dimensions" class="text-amber-400 font-bold"></span>
+            <div id="admin-points-image-preview-container" class="hidden mt-4 pt-3 border-t border-white/10">
+              <div class="text-[11px] font-tech text-white/50 mb-2 flex items-center justify-between">
+                <span><i class="fa-solid fa-eye text-[#3D48A8] mr-1"></i> Image Preview:</span>
+                <span id="admin-points-image-dimensions" class="text-[#3D48A8] font-bold"></span>
               </div>
-              <div class="rounded-lg overflow-hidden border border-amber-500/30 bg-black/80 max-h-80 flex items-center justify-center p-2">
+              <div class="rounded-lg overflow-hidden border border-[#2C3480]/40 bg-black/80 max-h-80 flex items-center justify-center p-2">
                 <img id="admin-points-image-preview" src="" alt="Points Table Preview" class="max-h-72 w-auto object-contain rounded shadow-lg">
               </div>
             </div>
           </div>
 
           <div class="pt-1">
-            <span class="text-xs font-tech text-slate-400 uppercase font-bold block mb-2">
-              <i class="fa-solid fa-star text-amber-400 mr-1"></i> Optional MVP & Additional Details
+            <span class="text-xs font-tech text-white/50 uppercase font-bold block mb-2">
+              <i class="fa-solid fa-star text-[#3D48A8] mr-1"></i> Optional MVP & Additional Details
             </span>
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label class="block text-xs font-tech text-slate-400 uppercase mb-1">MVP Player IGN (Optional)</label>
-              <input type="text" id="admin-points-mvp-ign" placeholder="e.g. IP・THUNDER" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white text-xs font-tech focus:border-amber-400 focus:outline-none">
+              <label class="block text-xs font-tech text-white/50 uppercase mb-1">MVP Player IGN (Optional)</label>
+              <input type="text" id="admin-points-mvp-ign" placeholder="e.g. IPãƒ»THUNDER" class="w-full bg-[#060810] border border-white/12 rounded-lg p-2.5 text-white text-xs font-tech focus:border-[#3D48A8] focus:outline-none">
             </div>
             <div>
-              <label class="block text-xs font-tech text-slate-400 uppercase mb-1">MVP Team Name (Optional)</label>
-              <input type="text" id="admin-points-mvp-team" placeholder="e.g. TOTAL DOMINANCE" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white text-xs font-tech focus:border-amber-400 focus:outline-none">
+              <label class="block text-xs font-tech text-white/50 uppercase mb-1">MVP Team Name (Optional)</label>
+              <input type="text" id="admin-points-mvp-team" placeholder="e.g. TOTAL DOMINANCE" class="w-full bg-[#060810] border border-white/12 rounded-lg p-2.5 text-white text-xs font-tech focus:border-[#3D48A8] focus:outline-none">
             </div>
           </div>
 
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="block text-xs font-tech text-slate-400 uppercase mb-1">MVP Total Kills (Optional)</label>
-              <input type="number" id="admin-points-mvp-kills" placeholder="e.g. 24" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white text-xs font-tech focus:border-amber-400 focus:outline-none">
+              <label class="block text-xs font-tech text-white/50 uppercase mb-1">MVP Total Kills (Optional)</label>
+              <input type="number" id="admin-points-mvp-kills" placeholder="e.g. 24" class="w-full bg-[#060810] border border-white/12 rounded-lg p-2.5 text-white text-xs font-tech focus:border-[#3D48A8] focus:outline-none">
             </div>
             <div>
-              <label class="block text-xs font-tech text-slate-400 uppercase mb-1">MVP Total Damage (Optional)</label>
-              <input type="text" id="admin-points-mvp-damage" placeholder="e.g. 4,850" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white text-xs font-tech focus:border-amber-400 focus:outline-none">
+              <label class="block text-xs font-tech text-white/50 uppercase mb-1">MVP Total Damage (Optional)</label>
+              <input type="text" id="admin-points-mvp-damage" placeholder="e.g. 4,850" class="w-full bg-[#060810] border border-white/12 rounded-lg p-2.5 text-white text-xs font-tech focus:border-[#3D48A8] focus:outline-none">
             </div>
           </div>
 
           <div>
             <div class="flex justify-between items-center mb-1">
-              <label class="block text-xs font-tech text-slate-400 uppercase">
+              <label class="block text-xs font-tech text-white/50 uppercase">
                 Squad Standings Data (Optional CSV Format)
               </label>
-              <span class="text-[10px] text-amber-400 font-tech">Format: TeamName, Matches, Booyahs, PlacePts, KillPts, TotalPts</span>
+              <span class="text-[10px] text-[#3D48A8] font-tech">Format: TeamName, Matches, Booyahs, PlacePts, KillPts, TotalPts</span>
             </div>
-            <textarea id="admin-points-raw-data" rows="4" placeholder="Optional if image is uploaded above. E.g.:&#10;TOTAL DOMINANCE, 4, 2, 28, 36, 64&#10;GODLIKE SQUAD, 4, 1, 22, 30, 52" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white text-xs font-mono focus:border-amber-400 focus:outline-none"></textarea>
+            <textarea id="admin-points-raw-data" rows="4" placeholder="Optional if image is uploaded above. E.g.:&#10;TOTAL DOMINANCE, 4, 2, 28, 36, 64&#10;GODLIKE SQUAD, 4, 1, 22, 30, 52" class="w-full bg-[#060810] border border-white/12 rounded-lg p-3 text-white text-xs font-mono focus:border-[#3D48A8] focus:outline-none"></textarea>
           </div>
 
           <div class="flex flex-wrap items-center gap-3 pt-1">
             <button type="submit" class="btn-esports-primary py-3 px-6 rounded-lg font-heading font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2">
               <i class="fa-solid fa-cloud-arrow-up"></i> Publish Points Table Live
             </button>
-            <button type="button" id="admin-points-clear-live-btn" class="btn-esports-secondary py-3 px-5 rounded-lg font-heading font-bold text-xs uppercase tracking-wider text-red-400 hover:text-white hover:bg-red-600/30 border border-red-500/40 flex items-center justify-center gap-2">
+            <button type="button" id="admin-points-clear-live-btn" class="btn-esports-secondary py-3 px-5 rounded-lg font-heading font-bold text-xs uppercase tracking-wider text-red-400 hover:text-white hover:bg-red-600/30 border border-white/15 flex items-center justify-center gap-2">
               <i class="fa-solid fa-trash-can"></i> Remove / Reset Live Points Table
             </button>
           </div>
@@ -2588,7 +2688,7 @@ function attachAdminFormListeners() {
         if (previewImg) previewImg.src = uploadedPointsTableImage;
         if (previewContainer) previewContainer.classList.remove('hidden');
         if (clearBtn) clearBtn.classList.remove('hidden');
-        if (statusText) statusText.innerHTML = `<span class="text-amber-400 font-bold"><i class="fa-solid fa-image"></i> Current Live Image</span>`;
+        if (statusText) statusText.innerHTML = `<span class="text-[#3D48A8] font-bold"><i class="fa-solid fa-image"></i> Current Live Image</span>`;
         if (previewImg) {
           previewImg.onload = () => {
             if (dimText) dimText.textContent = `${previewImg.naturalWidth} x ${previewImg.naturalHeight}px`;
@@ -2614,7 +2714,7 @@ function attachAdminFormListeners() {
         if (previewImg) previewImg.src = uploadedPointsTableImage;
         if (previewContainer) previewContainer.classList.remove('hidden');
         if (clearBtn) clearBtn.classList.remove('hidden');
-        if (statusText) statusText.innerHTML = `<span class="text-emerald-400 font-bold"><i class="fa-solid fa-circle-check"></i> ${file.name}</span>`;
+        if (statusText) statusText.innerHTML = `<span class="text-white font-bold"><i class="fa-solid fa-circle-check"></i> ${file.name}</span>`;
         if (previewImg) {
           previewImg.onload = () => {
             if (dimText) dimText.textContent = `${previewImg.naturalWidth} x ${previewImg.naturalHeight}px`;
@@ -2637,14 +2737,14 @@ function attachAdminFormListeners() {
         dropzone.addEventListener(eventName, (e) => {
           e.preventDefault();
           e.stopPropagation();
-          dropzone.classList.add('border-amber-400', 'bg-slate-900/90');
+          dropzone.classList.add('border-[#3D48A8]', 'bg-[#060810]/95');
         }, false);
       });
       ['dragleave', 'drop'].forEach(eventName => {
         dropzone.addEventListener(eventName, (e) => {
           e.preventDefault();
           e.stopPropagation();
-          dropzone.classList.remove('border-amber-400', 'bg-slate-900/90');
+          dropzone.classList.remove('border-[#3D48A8]', 'bg-[#060810]/95');
         }, false);
       });
       dropzone.addEventListener('drop', (e) => {
@@ -2790,3 +2890,8 @@ function attachAdminFormListeners() {
 function initAdminPortal() {
   renderAdminPortal();
 }
+
+
+
+
+
