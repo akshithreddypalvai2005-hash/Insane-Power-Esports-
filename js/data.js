@@ -16,7 +16,7 @@ const IP_DATA = {
     twitter: "https://twitter.com/IPEsportsIN",
     stats: {
       warsHosted: "48+",
-      prizeDistributed: "â‚¹6,50,000+",
+      prizeDistributed: "₹6,50,000+",
       registeredSquads: "1,400+",
       weeklyActiveGamers: "10,000+"
     }
@@ -80,7 +80,7 @@ const IP_DATA = {
       category: "weekly_wars",
       mode: "Squad (Battle Royale)",
       map: "Bermuda, Purgatory, Kalahari, Alpine (4 Matches / Day)",
-      prizePool: "â‚¹1,000",
+      prizePool: "₹1,000",
       entryFee: "100% FREE",
       totalSlots: 48, // 48 Slots total
       slotsPerGroup: 12, // 12 squads per group/day
@@ -90,7 +90,7 @@ const IP_DATA = {
       badgeText: "48 SLOTS (4 DAYS)",
       schedule: "Day 1 (Thu), Day 2 (Fri), Day 3 (Sat), Day 4 (Sun) @ 6:00 PM IST",
       bannerImage: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1200&q=80",
-      description: "48 Squads divided into 4 Days (12 squads per group). 1k Weekly Wars Prize Pool with exclusive Day-Wise Room IDP access!",
+      description: "48 Squads divided into 4 Days (12 squads per group). ₹1,000 Weekly Wars Prize Pool with exclusive Day-Wise Room IDP access!",
       groupSchedule: [
         { group: "Group A (Day 1)", slots: "Slots 1 - 12", day: "Thursday @ 6:00 PM IST", status: "Active Today" },
         { group: "Group B (Day 2)", slots: "Slots 13 - 24", day: "Friday @ 6:00 PM IST", status: "Upcoming" },
@@ -98,9 +98,9 @@ const IP_DATA = {
         { group: "Group D (Day 4)", slots: "Slots 37 - 48", day: "Sunday @ 6:00 PM IST", status: "Upcoming" }
       ],
       prizeBreakdown: [
-        { rank: "1st Place (Champions)", prize: "â‚¹600 + Slot Verification" },
-        { rank: "2nd Place (Runner-Up)", prize: "â‚¹300" },
-        { rank: "Tournament MVP", prize: "â‚¹100" }
+        { rank: "1st Place (Champions)", prize: "₹600 + Slot Verification" },
+        { rank: "2nd Place (Runner-Up)", prize: "₹300" },
+        { rank: "Tournament MVP", prize: "₹100" }
       ],
       pointSystem: [
         { place: "1st (Booyah)", pts: 12 },
@@ -149,7 +149,7 @@ const IP_DATA = {
   faqs: [
     {
       q: "How are the 48 slots divided across the 4 match days?",
-      a: "As squads register in order: Slots 1â€“12 are assigned to Day 1 (Group A), Slots 13â€“24 to Day 2 (Group B), Slots 25â€“36 to Day 3 (Group C), and Slots 37â€“48 to Day 4 (Group D)."
+      a: "As squads register in order: Slots 1–12 are assigned to Day 1 (Group A), Slots 13–24 to Day 2 (Group B), Slots 25–36 to Day 3 (Group C), and Slots 37–48 to Day 4 (Group D)."
     },
     {
       q: "Who gets access to the Room ID & Password (IDP)?",

@@ -461,7 +461,7 @@ function initGoogleAuth() {
       firebaseAuth = firebase.auth();
       googleAuthProvider = new firebase.auth.GoogleAuthProvider();
       googleAuthProvider.setCustomParameters({ prompt: 'select_account' });
-      console.log('âš¡ Firebase Auth initialized successfully for Insane Power Esports');
+      console.log('⚡ Firebase Auth initialized successfully for Insane Power Esports');
     }
   } catch (err) {
     console.error('Firebase Auth init error:', err);
@@ -1085,9 +1085,9 @@ function renderHomeDashboard() {
     const visibleTeams = registrations.filter(reg => reg.teamName).slice(0, 6);
     teams.innerHTML = visibleTeams.length ? visibleTeams.map(reg => `
       <article class="confirmed-team-card interactive-card reveal-item" data-reveal>
-        <div class="team-card-topline"><span>${escapeMarkup(reg.group || 'SEASON 12')}</span><strong class="team-slot">#${escapeMarkup(reg.slotNumber || 'â€”')}</strong></div>
+        <div class="team-card-topline"><span>${escapeMarkup(reg.group || 'SEASON 12')}</span><strong class="team-slot">#${escapeMarkup(reg.slotNumber || '—')}</strong></div>
         <h3>${escapeMarkup(reg.teamName)} <span class="text-gradient">[${escapeMarkup(reg.teamTag || 'IP')}]</span></h3>
-        <p class="team-card-captain">Captain / IGL Â· @${escapeMarkup(reg.iglUsername || 'unknown')}</p>
+        <p class="team-card-captain">Captain / IGL · @${escapeMarkup(reg.iglUsername || 'unknown')}</p>
         <div class="team-card-bottom"><span><i class="fa-solid fa-shield-halved"></i> ${escapeMarkup(reg.status || 'CONFIRMED')}</span><strong>${escapeMarkup(reg.matchDay || 'Match schedule locked')}</strong></div>
       </article>
     `).join('') : `
@@ -1859,7 +1859,7 @@ function renderIdpPortal() {
           <div class="w-12 h-12 mx-auto mb-3 rounded-full bg-red-600/20 border border-red-500 flex items-center justify-center text-red-400 text-xl">
             <i class="fa-solid fa-lock"></i>
           </div>
-          <h4 class="font-heading font-bold text-xl text-white mb-1">ACCESS LOCKED â€” NOT YOUR MATCH DAY</h4>
+          <h4 class="font-heading font-bold text-xl text-white mb-1">ACCESS LOCKED — NOT YOUR MATCH DAY</h4>
           <p class="text-xs text-white/70 max-w-lg mx-auto leading-relaxed mb-4 font-tech">
             Your squad <strong class="text-[#3D48A8]">"${userReg.teamName}"</strong> is scheduled for <strong class="text-white">${userReg.group}</strong> (${userReg.matchDay}).
             <br>
